@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Offer Bot - Админ панель</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-robot"></i> Get Offer Bot</h2>
+                <p>Админ панель</p>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Дашборд</span>
+                </li>
+                <li class="menu-item" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </li>
+                <li class="menu-item" data-page="subscriptions">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Подписки</span>
+                </li>
+                <li class="menu-item" data-page="responses">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Отклики</span>
+                </li>
+                <li class="menu-item" data-page="auto-responses">
+                    <i class="fas fa-magic"></i>
+                    <span>Автоотклики</span>
+                </li>
+                <li class="menu-item" data-page="ai-responses">
+                    <i class="fas fa-brain"></i>
+                    <span>AI-отклики</span>
+                </li>
+                <li class="menu-item" data-page="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Аналитика</span>
+                </li>
+                <li class="menu-item" data-page="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>Уведомления</span>
+                </li>
+                <li class="menu-item" data-page="bot-settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки бота</span>
+                </li>
+                <li class="menu-item" data-page="messages">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Рассылки</span>
+                </li>
+                <li class="menu-item" data-page="integrations">
+                    <i class="fas fa-plug"></i>
+                    <span>Интеграции</span>
+                </li>
+                <li class="menu-item" data-page="modules">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <span>Разделы</span>
+                </li>
+                <li class="menu-item" data-page="texts">
+                    <i class="fas fa-edit"></i>
+                    <span>Тексты</span>
+                </li>
+                <li class="menu-item" data-page="pricing">
+                    <i class="fas fa-tags"></i>
+                    <span>Тарифы</span>
+                </li>
+                <li class="menu-item" data-page="logs">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Логи</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <h1 id="page-title">Дашборд</h1>
+                </div>
+                <div class="header-right">
+                    <div class="bot-status">
+                        <span class="status-indicator online"></span>
+                        <span>Бот онлайн</span>
+                    </div>
+                    <div class="admin-profile">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Администратор</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area" id="content-area">
+                <!-- Content will be loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

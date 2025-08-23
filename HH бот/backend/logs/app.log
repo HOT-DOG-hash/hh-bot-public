@@ -1,0 +1,50 @@
+2025-08-17 23:35:24,248 - INFO - BEGIN (implicit)
+2025-08-17 23:35:24,252 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:35:24,253 - INFO - [generated in 0.00079s] (50, 0)
+2025-08-17 23:35:24,255 - INFO - ROLLBACK
+2025-08-17 23:36:16,307 - INFO - BEGIN (implicit)
+2025-08-17 23:36:16,312 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:36:16,313 - INFO - [generated in 0.00063s] (50, 0)
+2025-08-17 23:36:16,315 - INFO - ROLLBACK
+2025-08-17 23:40:02,216 - INFO - BEGIN (implicit)
+2025-08-17 23:40:02,221 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:40:02,222 - INFO - [generated in 0.00079s] (50, 0)
+2025-08-17 23:40:02,224 - INFO - ROLLBACK
+2025-08-17 23:40:11,851 - INFO - HTTP Request: GET http://test/healthz "HTTP/1.1 200 OK"
+2025-08-17 23:40:11,859 - INFO - BEGIN (implicit)
+2025-08-17 23:40:11,863 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:40:11,863 - INFO - [generated in 0.00037s] (50, 0)
+2025-08-17 23:40:11,865 - INFO - ROLLBACK
+2025-08-17 23:40:11,866 - INFO - HTTP Request: GET http://test/api/bot/resumes "HTTP/1.1 200 OK"
+2025-08-18 19:22:13,041 - INFO - BEGIN (implicit)
+2025-08-18 19:22:13,047 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:22:13,048 - INFO - [generated in 0.00087s] (50, 0)
+2025-08-18 19:22:13,054 - INFO - ROLLBACK
+2025-08-18 19:22:16,022 - INFO - BEGIN (implicit)
+2025-08-18 19:22:16,023 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:22:16,026 - INFO - [cached since 2.979s ago] (50, 0)
+2025-08-18 19:22:16,030 - INFO - ROLLBACK
+2025-08-18 19:22:16,664 - INFO - BEGIN (implicit)
+2025-08-18 19:22:16,665 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:22:16,668 - INFO - [cached since 3.621s ago] (50, 0)
+2025-08-18 19:22:16,670 - INFO - ROLLBACK
+2025-08-18 19:31:02,276 - INFO - BEGIN (implicit)
+2025-08-18 19:31:02,278 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at 
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:31:02,280 - INFO - [cached since 529.2s ago] (50, 0)
+2025-08-18 19:31:02,283 - INFO - ROLLBACK

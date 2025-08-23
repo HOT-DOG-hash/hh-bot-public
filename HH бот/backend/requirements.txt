@@ -1,0 +1,30 @@
+# FastAPI и ASGI
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# Работа с БД
+SQLAlchemy[asyncio]==2.0.34
+asyncpg==0.30.0
+
+# Миграции
+alembic==1.13.2
+
+# Redis
+redis[async]==5.0.8
+aiosqlite==0.20.0
+
+
+# Внешние запросы
+httpx==0.28.1
+
+# Конфигурации
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+
+# Логирование и утилиты
+structlog==24.4.0
+
+# Тесты
+pytest==8.3.3
+pytest-asyncio==0.23.8
+httpx[cli]==0.28.1

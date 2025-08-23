@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль пользователя - Get Offer Bot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-robot"></i> Get Offer Bot</h2>
+                <p>Админ панель</p>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Дашборд</span>
+                </li>
+                <li class="menu-item active" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </li>
+                <li class="menu-item" data-page="subscriptions">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Подписки</span>
+                </li>
+                <li class="menu-item" data-page="responses">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Отклики</span>
+                </li>
+                <li class="menu-item" data-page="auto-responses">
+                    <i class="fas fa-magic"></i>
+                    <span>Автоотклики</span>
+                </li>
+                <li class="menu-item" data-page="ai-responses">
+                    <i class="fas fa-brain"></i>
+                    <span>AI-отклики</span>
+                </li>
+                <li class="menu-item" data-page="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Аналитика</span>
+                </li>
+                <li class="menu-item" data-page="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>Уведомления</span>
+                </li>
+                <li class="menu-item" data-page="bot-settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки бота</span>
+                </li>
+                <li class="menu-item" data-page="messages">
+                    <i class="fas fa-envelope"></i>
+                    <span>Сообщения</span>
+                </li>
+                <li class="menu-item" data-page="integrations">
+                    <i class="fas fa-plug"></i>
+                    <span>Интеграции</span>
+                </li>
+                <li class="menu-item" data-page="modules">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <span>Разделы</span>
+                </li>
+                <li class="menu-item" data-page="texts">
+                    <i class="fas fa-edit"></i>
+                    <span>Тексты</span>
+                </li>
+                <li class="menu-item" data-page="logs">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Логи</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="breadcrumb">
+                        <a href="index.html" class="breadcrumb-link">
+                            <i class="fas fa-users"></i>
+                            Пользователи
+                        </a>
+                        <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                        <span class="breadcrumb-current">Профиль пользователя</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="bot-status">
+                        <span class="status-indicator online"></span>
+                        <span>Бот онлайн</span>
+                    </div>
+                    <div class="admin-profile">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Администратор</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area" id="content-area">
+                <!-- User Profile Header -->
+                <div class="user-profile-header">
+                    <div class="user-profile-info">
+                        <div class="user-avatar-large">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-profile-details">
+                            <h1 class="user-profile-name" id="userProfileName">Иван Петров</h1>
+                            <div class="user-profile-meta">
+                                <span class="user-profile-username" id="userProfileUsername">@ivan_petrov</span>
+                                <span class="user-profile-separator">•</span>
+                                <span class="user-profile-id" id="userProfileId">ID: 123456789</span>
+                                <span class="user-profile-separator">•</span>
+                                <span class="user-profile-status" id="userProfileStatus">
+                                    <span class="status-badge status-active">Активен</span>
+                                </span>
+                            </div>
+                            <div class="user-profile-stats">
+                                <div class="profile-stat">
+                                    <span class="profile-stat-value" id="userTotalResponses">156</span>
+                                    <span class="profile-stat-label">Откликов</span>
+                                </div>
+                                <div class="profile-stat">
+                                    <span class="profile-stat-value" id="userBalance">1,250 ₽</span>
+                                    <span class="profile-stat-label">Баланс</span>
+                                </div>
+                                <div class="profile-stat">
+                                    <span class="profile-stat-value" id="userReferrals">2</span>
+                                    <span class="profile-stat-label">Рефералов</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-profile-actions">
+                        <button class="btn btn-secondary" onclick="toggleUserStatus()">
+                            <i class="fas fa-user-slash"></i>
+                            <span id="statusToggleText">Заблокировать</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="profile-tabs">
+                    <button class="profile-tab active" data-tab="basic-info">
+                        <i class="fas fa-user"></i>
+                        Основная информация
+                    </button>
+                    <button class="profile-tab" data-tab="operations">
+                        <i class="fas fa-credit-card"></i>
+                        Операции
+                    </button>
+                    <button class="profile-tab" data-tab="referrals">
+                        <i class="fas fa-users"></i>
+                        Рефералы
+                    </button>
+                    <button class="profile-tab" data-tab="responses">
+                        <i class="fas fa-paper-plane"></i>
+                        Отклики
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="profile-tab-content">
+                    <!-- Basic Info Tab -->
+                    <div class="tab-panel active" id="basic-info">
+                        <div class="tab-panel-grid">
+                            <!-- Personal Information -->
+                            <div class="info-card">
+                                <div class="info-card-header">
+                                    <h3 class="info-card-title">
+                                        <i class="fas fa-user"></i>
+                                        Личные данные
+                                    </h3>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="info-field">
+                                        <label class="info-label">Telegram ID</label>
+                                        <span class="info-value" id="telegramId">123456789</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">Имя</label>
+                                        <span class="info-value editable" id="userName">Иван Петров</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">Username</label>
+                                        <span class="info-value" id="userUsername">@ivan_petrov</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">Дата регистрации</label>
+                                        <span class="info-value" id="registrationDate">15.01.2024 10:15</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">Последняя активность</label>
+                                        <span class="info-value" id="lastActivity">29.01.2024 14:30</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">UTM Source</label>
+                                        <span class="info-value" id="utmSource">telegram</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">UTM Medium</label>
+                                        <span class="info-value" id="utmMedium">social</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">UTM Campaign</label>
+                                        <span class="info-value" id="utmCampaign">winter2024</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subscription Information -->
+                            <div class="info-card">
+                                <div class="info-card-header">
+                                    <h3 class="info-card-title">
+                                        <i class="fas fa-crown"></i>
+                                        Подписка и баланс
+                                    </h3>
+                                    <button class="btn btn-ghost btn-sm" onclick="editSubscriptionAndBalance()">
+                                        <i class="fas fa-edit"></i>
+                                        Редактировать
+                                    </button>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="info-field">
+                                        <label class="info-label">Тип подписки</label>
+                                        <span class="info-value">
+                                            <span class="subscription-badge subscription-premium" id="subscriptionType">Месяц</span>
+                                        </span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">Окончание подписки</label>
+                                        <span class="info-value" id="subscriptionEnd">15.02.2024</span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">Баланс</label>
+                                        <span class="info-value">
+                                            <span class="balance-amount positive" id="userBalanceDetail">1,250 ₽</span>
+                                            <button class="btn btn-ghost btn-xs" onclick="addBalance()">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                    <div class="info-field">
+                                        <label class="info-label">HH подключение</label>
+                                        <span class="info-value">
+                                            <span class="feature-badge feature-enabled" id="hhConnection">Подключен</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Admin Comments -->
+                            <div class="info-card full-width">
+                                <div class="info-card-header">
+                                    <h3 class="info-card-title">
+                                        <i class="fas fa-comment"></i>
+                                        Комментарии администратора
+                                    </h3>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="comment-section">
+                                        <textarea class="comment-textarea" id="adminComment" placeholder="Добавить комментарий...">Активный пользователь, много откликов</textarea>
+                                        <div class="comment-actions">
+                                            <button class="btn btn-primary btn-sm" onclick="saveComment()">
+                                                <i class="fas fa-save"></i>
+                                                Сохранить
+                                            </button>
+                                            <button class="btn btn-ghost btn-sm" onclick="clearComment()">
+                                                <i class="fas fa-times"></i>
+                                                Очистить
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="comment-history">
+                                        <h4 class="comment-history-title">История комментариев</h4>
+                                        <div class="comment-item">
+                                            <div class="comment-meta">
+                                                <span class="comment-author">Администратор</span>
+                                                <span class="comment-date">29.01.2024 14:30</span>
+                                            </div>
+                                            <div class="comment-text">Активный пользователь, много откликов</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operations Tab -->
+                    <div class="tab-panel" id="operations">
+                        <div class="operations-header">
+                            <h3 class="operations-title">История операций</h3>
+                            <div class="operations-filters">
+                                <select class="filter-select" id="operationType">
+                                    <option value="">Все операции</option>
+                                    <option value="payment">Платежи</option>
+                                    <option value="refund">Возвраты</option>
+                                    <option value="bonus">Бонусы</option>
+                                    <option value="withdrawal">Списания</option>
+                                </select>
+                                <input type="date" class="filter-input" id="operationDateFrom">
+                                <input type="date" class="filter-input" id="operationDateTo">
+                                <button class="btn btn-ghost" onclick="clearOperationFilters()">
+                                    <i class="fas fa-times"></i>
+                                    Очистить
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="operations-stats">
+                            <div class="operation-stat-card">
+                                <div class="operation-stat-icon income">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="operation-stat-content">
+                                    <div class="operation-stat-value">+3,450 ₽</div>
+                                    <div class="operation-stat-label">Всего пополнений</div>
+                                </div>
+                            </div>
+                            <div class="operation-stat-card">
+                                <div class="operation-stat-icon expense">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="operation-stat-content">
+                                    <div class="operation-stat-value">-2,200 ₽</div>
+                                    <div class="operation-stat-label">Всего списаний</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="operations-table-container">
+                            <table class="operations-table">
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Тип операции</th>
+                                        <th>Сумма</th>
+                                        <th>Описание</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="operationsTableBody">
+                                    <tr>
+                                        <td>29.01.2024 14:30</td>
+                                        <td><span class="operation-type payment">Платеж</span></td>
+                                        <td class="amount positive">+1,900 ₽</td>
+                                        <td>Продление подписки на месяц</td>
+                                        <td><span class="status-badge status-success">Выполнено</span></td>
+                                        <td>
+                                            <button class="action-btn action-view" onclick="viewOperation(1)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>25.01.2024 16:45</td>
+                                        <td><span class="operation-type withdrawal">Списание</span></td>
+                                        <td class="amount negative">-150 ₽</td>
+                                        <td>Использование AI-откликов</td>
+                                        <td><span class="status-badge status-success">Выполнено</span></td>
+                                        <td>
+                                            <button class="action-btn action-view" onclick="viewOperation(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20.01.2024 12:15</td>
+                                        <td><span class="operation-type bonus">Бонус</span></td>
+                                        <td class="amount positive">+500 ₽</td>
+                                        <td>Реферальный бонус</td>
+                                        <td><span class="status-badge status-success">Выполнено</span></td>
+                                        <td>
+                                            <button class="action-btn action-view" onclick="viewOperation(3)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="operations-actions">
+                            <button class="btn btn-primary" onclick="addManualOperation()">
+                                <i class="fas fa-plus"></i>
+                                Добавить операцию
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportOperations()">
+                                <i class="fas fa-download"></i>
+                                Экспорт
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Referrals Tab -->
+                    <div class="tab-panel" id="referrals">
+                        <div class="referrals-overview">
+                            <div class="referral-stats">
+                                <div class="referral-stat-card">
+                                    <div class="referral-stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="referral-stat-content">
+                                        <div class="referral-stat-value">2</div>
+                                        <div class="referral-stat-label">Привлечено пользователей</div>
+                                    </div>
+                                </div>
+                                <div class="referral-stat-card">
+                                    <div class="referral-stat-icon">
+                                        <i class="fas fa-coins"></i>
+                                    </div>
+                                    <div class="referral-stat-content">
+                                        <div class="referral-stat-value">1,200 ₽</div>
+                                        <div class="referral-stat-label">Заработано с рефералов</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="referral-tree-section">
+                            <h3 class="section-title">Реферальное дерево</h3>
+                            <div class="referral-tree">
+                                <div class="referral-node current-user">
+                                    <div class="referral-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="referral-info">
+                                        <div class="referral-name">Иван Петров</div>
+                                        <div class="referral-meta">@ivan_petrov • Основной пользователь</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="referral-children">
+                                    <div class="referral-node">
+                                        <div class="referral-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="referral-info">
+                                            <div class="referral-name">Мария Сидорова</div>
+                                            <div class="referral-meta">@maria_sid • Активен • +600 ₽</div>
+                                        </div>
+                                        <div class="referral-actions">
+                                            <button class="btn btn-ghost btn-xs" onclick="viewReferralProfile(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="referral-node">
+                                        <div class="referral-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="referral-info">
+                                            <div class="referral-name">Алексей Козлов</div>
+                                            <div class="referral-meta">@alex_kozlov • Заблокирован • +600 ₽</div>
+                                        </div>
+                                        <div class="referral-actions">
+                                            <button class="btn btn-ghost btn-xs" onclick="viewReferralProfile(3)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="referral-earnings">
+                            <h3 class="section-title">История реферальных доходов</h3>
+                            <div class="earnings-table-container">
+                                <table class="earnings-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Дата</th>
+                                            <th>Реферал</th>
+                                            <th>Операция</th>
+                                            <th>Доход</th>
+                                            <th>Статус</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>25.01.2024</td>
+                                            <td>Мария Сидорова</td>
+                                            <td>Подписка на неделю</td>
+                                            <td class="amount positive">+103 ₽</td>
+                                            <td><span class="status-badge status-success">Зачислено</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>20.01.2024</td>
+                                            <td>Алексей Козлов</td>
+                                            <td>Регистрация</td>
+                                            <td class="amount positive">+100 ₽</td>
+                                            <td><span class="status-badge status-success">Зачислено</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>18.01.2024</td>
+                                            <td>Мария Сидорова</td>
+                                            <td>Регистрация</td>
+                                            <td class="amount positive">+100 ₽</td>
+                                            <td><span class="status-badge status-success">Зачислено</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Responses Tab -->
+                    <div class="tab-panel" id="responses">
+                        <div class="responses-header">
+                            <h3 class="responses-title">Отклики пользователя</h3>
+                            <div class="responses-filters">
+                                <select class="filter-select" id="responseStatus">
+                                    <option value="">Все статусы</option>
+                                    <option value="sent">Отправлен</option>
+                                    <option value="viewed">Просмотрен</option>
+                                    <option value="rejected">Отклонен</option>
+                                    <option value="invited">Приглашен</option>
+                                </select>
+                                <select class="filter-select" id="responseType">
+                                    <option value="">Все типы</option>
+                                    <option value="manual">Ручные</option>
+                                    <option value="auto">Автоотклики</option>
+                                    <option value="ai">AI-отклики</option>
+                                </select>
+                                <input type="date" class="filter-input" id="responseDateFrom">
+                                <input type="date" class="filter-input" id="responseDateTo">
+                                <button class="btn btn-ghost" onclick="clearResponseFilters()">
+                                    <i class="fas fa-times"></i>
+                                    Очистить
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="responses-stats">
+                            <div class="response-stat-card">
+                                <div class="response-stat-icon total">
+                                    <i class="fas fa-paper-plane"></i>
+                                </div>
+                                <div class="response-stat-content">
+                                    <div class="response-stat-value">156</div>
+                                    <div class="response-stat-label">Всего откликов</div>
+                                </div>
+                            </div>
+                            <div class="response-stat-card">
+                                <div class="response-stat-icon success">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="response-stat-content">
+                                    <div class="response-stat-value">23</div>
+                                    <div class="response-stat-label">Приглашений</div>
+                                </div>
+                            </div>
+                            <div class="response-stat-card">
+                                <div class="response-stat-icon rate">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="response-stat-content">
+                                    <div class="response-stat-value">14.7%</div>
+                                    <div class="response-stat-label">Конверсия</div>
+                                </div>
+                            </div>
+                            <div class="response-stat-card">
+                                <div class="response-stat-icon ai">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <div class="response-stat-content">
+                                    <div class="response-stat-value">0</div>
+                                    <div class="response-stat-label">AI-откликов</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="responses-table-container">
+                            <table class="responses-table">
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Вакансия</th>
+Компания</th>
+                                        <th>Тип</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="responsesTableBody">
+                                    <tr>
+                                        <td>29.01.2024</td>
+                                        <td>Senior Python Developer</td>
+                                        <td>TechCorp</td>
+                                        <td><span class="response-type manual">Ручной</span></td>
+                                        <td><span class="status-badge status-info">Отправлен</span></td>
+                                        <td>
+                                            <button class="action-btn action-view" onclick="viewResponse(1)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>28.01.2024</td>
+                                        <td>Backend Developer</td>
+                                        <td>StartupXYZ</td>
+                                        <td><span class="response-type auto">Автоотклик</span></td>
+                                        <td><span class="status-badge status-warning">Просмотрен</span></td>
+                                        <td>
+                                            <button class="action-btn action-view" onclick="viewResponse(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>27.01.2024</td>
+                                        <td>Python Developer</td>
+                                        <td>DevCompany</td>
+                                        <td><span class="response-type manual">Ручной</span></td>
+                                        <td><span class="status-badge status-success">Приглашен</span></td>
+                                        <td>
+                                            <button class="action-btn action-view" onclick="viewResponse(3)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="responses-analytics">
+                            <h3 class="section-title">Аналитика откликов</h3>
+                            <div class="analytics-grid">
+                                <div class="analytics-card">
+                                    <div class="analytics-header">
+                                        <h4 class="analytics-title">Статистика по дням</h4>
+                                    </div>
+                                    <div class="analytics-chart">
+                                        <div class="chart-placeholder">
+                                            📊 График откликов по дням
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="analytics-card">
+                                    <div class="analytics-header">
+                                        <h4 class="analytics-title">Топ компаний</h4>
+                                    </div>
+                                    <div class="analytics-list">
+                                        <div class="analytics-item">
+                                            <span class="analytics-label">TechCorp</span>
+                                            <span class="analytics-value">15 откликов</span>
+                                        </div>
+                                        <div class="analytics-item">
+                                            <span class="analytics-label">StartupXYZ</span>
+                                            <span class="analytics-value">12 откликов</span>
+                                        </div>
+                                        <div class="analytics-item">
+                                            <span class="analytics-label">DevCompany</span>
+                                            <span class="analytics-value">8 откликов</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="user-profile.js"></script>
+</body>
+</html>
+                                        <th>

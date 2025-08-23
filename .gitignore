@@ -1,0 +1,42 @@
+# venv / IDE / cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+dist/
+build/
+node_modules/
+
+# env & keys
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.keystore
+*.crt
+*.cert
+
+# local configs & secrets
+config.local.*.json
+secrets*.json
+secrets*.yml
+front_bot/.env
+front_bot/config_secrets.py
+backend/app/core/local_settings.py
+backend/app/core/config_prod.py
+
+# local db
+*.sqlite
+*.db
+
+# php deps
+front_bot_php/vendor/
+
+# os junk
+.DS_Store
+._*
+Thumbs.db

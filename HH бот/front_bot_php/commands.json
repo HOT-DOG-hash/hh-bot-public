@@ -1,0 +1,38 @@
+[
+  {
+    "command": "start",
+    "description": "Запустить бота"
+  },
+  {
+    "command": "menu",
+    "description": "Главное меню"
+  },
+  {
+    "command": "responses",
+    "description": "Настроить отклики"
+  },
+  {
+    "command": "response_messages",
+    "description": "Сопроводительные письма"
+  },
+  {
+    "command": "auto_responses",
+    "description": "Автоотклики по параметрам"
+  },
+  {
+    "command": "subscription",
+    "description": "Подписка"
+  },
+  {
+    "command": "stats",
+    "description": "Статистика"
+  },
+  {
+    "command": "support",
+    "description": "Поддержка"
+  },
+  {
+    "command": "referral",
+    "description": "Реферальная программа"
+  }
+]

@@ -1,0 +1,7 @@
+[2025-08-01T15:09:03.083801+00:00] telegram_bot.INFO: Demo bot started successfully! [] []
+[2025-08-01T15:18:25.912337+00:00] telegram_bot.INFO: Demo bot started successfully! [] []
+[2025-08-01T15:23:18.643902+00:00] telegram_bot.INFO: Demo bot started successfully! [] []
+[2025-08-01T15:24:49.947711+00:00] telegram_bot.INFO: Demo bot started successfully! [] []
+[2025-08-01T15:33:44.969555+00:00] telegram_bot.INFO: Demo bot started successfully! [] []
+[2025-08-01T15:44:37.156788+00:00] telegram_bot.INFO: Demo bot started successfully! [] []
+[2025-08-15T11:21:58.787714+00:00] telegram_bot.ERROR: Failed to initialize bot: Telegram returned an invalid response! [] []

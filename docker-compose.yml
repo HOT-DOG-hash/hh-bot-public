@@ -1,0 +1,100 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hh}
+      POSTGRES_USER: ${POSTGRES_USER:-hh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hh}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hh} -d ${POSTGRES_DB:-hh}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server","--save","60","1","--loglevel","warning"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile    # FastAPI-сервис (копирует app/, migrations/, alembic.ini, requirements.txt)
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-hh}:${POSTGRES_PASSWORD:-hh}@db:5432/${POSTGRES_DB:-hh}
+      REDIS_URL: redis://cache:6379/0
+      TZ: ${TZ:-UTC}
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile    # Dockerfile бота (кладёт код в /bot, entrypoint.sh нормализуется при сборке)
+    entrypoint: ["/bot/entrypoint.sh"]
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
+      BOT_TOKEN: ${BOT_TOKEN:-${TELEGRAM_BOT_TOKEN}}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-hh}:${POSTGRES_PASSWORD:-hh}@db:5432/${POSTGRES_DB:-hh}
+      REDIS_URL: redis://cache:6379/0
+      BOT_LOG_DIR: /var/log/app
+      BOT_LOG_FILE: /var/log/app/bot.log
+      TZ: ${TZ:-UTC}
+    volumes:
+      - botlogs:/var/log/app
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'python -u /bot/main.py' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  botlogs:

@@ -15,7 +15,7 @@ from utils.states import (
     ASK_COVER_LETTER, CONFIRMATION, ASK_SEARCH_METHOD, ASK_HH_URL
 )
 from utils.helpers import build_multi_choice_keyboard, handle_multi_choice, build_paginated_keyboard
-from routers.start import in_development
+from .start import in_development
 
 # Константы
 DAILY_RESPONSE_LIMIT = 200

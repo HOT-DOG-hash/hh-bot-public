@@ -1,83 +1,24 @@
-# 📦 Конфигурации для демо-бота (без HH API)
+# HH бот/front_bot/config.py
+from __future__ import annotations
+import os
+import logging
 
-# ========== Telegram Bot ==========
-TELEGRAM_BOT_TOKEN = "TELEGRAM_BOT_TOKEN"
-BOT_USERNAME = "TELEGRAM_BOT_USERNAME"
+def _sanitize(s: str | None) -> str | None:
+    if not s:
+        return None
+    s = s.strip().strip('"').strip("'").strip()
+    if s.startswith("<") and s.endswith(">"):
+        s = s[1:-1].strip()
+    return s or None
 
-# ========== Настройки проекта ==========
-PROJECT_NAME = "Demo Bot - Front Only"
-
-# ========== Демо данные ==========
-DEMO_COUNTRIES = [
-    {"id": "113", "name": "Россия"},
-    {"id": "40", "name": "Казахстан"},
-    {"id": "5", "name": "Украина"},
-    {"id": "16", "name": "Беларусь"}
-]
-
-DEMO_REGIONS = {
-    "113": [
-        {"id": "1", "name": "Москва"},
-        {"id": "2", "name": "Санкт-Петербург"},
-        {"id": "3", "name": "Екатеринбург"},
-        {"id": "4", "name": "Новосибирск"},
-        {"id": "all_113", "name": "По всей стране"}
-    ]
-}
-
-DEMO_SCHEDULES = [
-    {"id": "fullDay", "name": "Полный день"},
-    {"id": "shift", "name": "Сменный график"},
-    {"id": "flexible", "name": "Гибкий график"},
-    {"id": "remote", "name": "Удаленная работа"},
-    {"id": "flyInFlyOut", "name": "Вахтовый метод"}
-]
-
-DEMO_EMPLOYMENT = [
-    {"id": "full", "name": "Полная занятость"},
-    {"id": "part", "name": "Частичная занятость"},
-    {"id": "project", "name": "Проектная работа"},
-    {"id": "volunteer", "name": "Волонтерство"},
-    {"id": "probation", "name": "Стажировка"}
-]
-
-DEMO_PROFESSIONS = [
-    {"id": "1", "name": "Информационные технологии"},
-    {"id": "2", "name": "Продажи"},
-    {"id": "3", "name": "Маркетинг, реклама, PR"},
-    {"id": "4", "name": "Административная работа"},
-    {"id": "5", "name": "Бухгалтерия, финансы"},
-    {"id": "6", "name": "Управление персоналом, HR"},
-    {"id": "7", "name": "Производство, сырье, с/х"},
-    {"id": "8", "name": "Строительство, недвижимость"}
-]
-
-DEMO_RESUMES = [
-    {"id": "resume_1", "title": "Python разработчик"},
-    {"id": "resume_2", "title": "Frontend разработчик"},
-    {"id": "resume_3", "title": "Менеджер по продажам"}
-]
-
-DEMO_VACANCIES = [
-    {
-        "id": "vacancy_1",
-        "name": "Python разработчик",
-        "employer": {"name": "ТехКомпания"},
-        "salary": {"from": 100000, "to": 150000, "currency": "RUR"},
-        "area": {"name": "Москва"}
-    },
-    {
-        "id": "vacancy_2", 
-        "name": "Frontend разработчик React",
-        "employer": {"name": "Веб-студия"},
-        "salary": {"from": 80000, "to": 120000, "currency": "RUR"},
-        "area": {"name": "Санкт-Петербург"}
-    },
-    {
-        "id": "vacancy_3",
-        "name": "Менеджер по продажам",
-        "employer": {"name": "Торговая компания"},
-        "salary": {"from": 60000, "to": 100000, "currency": "RUR"},
-        "area": {"name": "Москва"}
-    }
-]
+def read_token_from_env() -> str | None:
+    """
+    МЯГКАЯ версия: ничего не падает.
+    Возвращает токен из окружения либо None. Логи — warning, без sys.exit.
+    """
+    for key in ("TELEGRAM_BOT_TOKEN", "BOT_TOKEN"):
+        val = _sanitize(os.getenv(key))
+        if val and ":" in val and len(val) >= 30:
+            return val
+    logging.warning("config.read_token_from_env: токен в окружении не найден или в неверном формате.")
+    return None

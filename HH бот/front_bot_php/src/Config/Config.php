@@ -1,25 +1,34 @@
 <?php
-
 namespace FrontBot\Config;
 
-/**
- * Конфигурации для демо-бота (без HH API)
- */
-class Config
+final class Config
 {
-    // ========== Telegram Bot ==========
-    public const TELEGRAM_BOT_TOKEN = "TELEGRAM_BOT_TOKEN";
-    public const BOT_USERNAME = "BOT_USERNAME";
+    /** Берём токен только из ENV (как у Python-бота). */
+    public static function botToken(): ?string {
+        $v = getenv('TELEGRAM_BOT_TOKEN') ?: getenv('BOT_TOKEN') ?: null;
+        if ($v !== null) {
+            $v = trim($v, " \t\n\r\0\x0B\"'><");
+        }
+        return $v ?: null;
+    }
 
-    // ========== Настройки проекта ==========
-    public const PROJECT_NAME = "Demo Bot - Front Only";
+    public static function botUsername(): ?string {
+        $v = getenv('BOT_USERNAME') ?: null;
+        return $v ? trim($v) : null;
+    }
 
-    // ========== Демо данные ==========
+    public const PROJECT_NAME = "Front App";
+
+    /** Включать демо-справочники только если DEMO_MODE=1 */
+    public static function demoMode(): bool {
+        return getenv('DEMO_MODE') === '1';
+    }
+
     public const DEMO_COUNTRIES = [
         ["id" => "113", "name" => "Россия"],
         ["id" => "40", "name" => "Казахстан"],
         ["id" => "5", "name" => "Украина"],
-        ["id" => "16", "name" => "Беларусь"]
+        ["id" => "16", "name" => "Беларусь"],
     ];
 
     public const DEMO_REGIONS = [
@@ -28,8 +37,8 @@ class Config
             ["id" => "2", "name" => "Санкт-Петербург"],
             ["id" => "3", "name" => "Екатеринбург"],
             ["id" => "4", "name" => "Новосибирск"],
-            ["id" => "all_113", "name" => "По всей стране"]
-        ]
+            ["id" => "all_113", "name" => "По всей стране"],
+        ],
     ];
 
     public const DEMO_SCHEDULES = [
@@ -37,7 +46,7 @@ class Config
         ["id" => "shift", "name" => "Сменный график"],
         ["id" => "flexible", "name" => "Гибкий график"],
         ["id" => "remote", "name" => "Удаленная работа"],
-        ["id" => "flyInFlyOut", "name" => "Вахтовый метод"]
+        ["id" => "flyInFlyOut", "name" => "Вахтовый метод"],
     ];
 
     public const DEMO_EMPLOYMENT = [
@@ -45,7 +54,7 @@ class Config
         ["id" => "part", "name" => "Частичная занятость"],
         ["id" => "project", "name" => "Проектная работа"],
         ["id" => "volunteer", "name" => "Волонтерство"],
-        ["id" => "probation", "name" => "Стажировка"]
+        ["id" => "probation", "name" => "Стажировка"],
     ];
 
     public const DEMO_PROFESSIONS = [
@@ -56,13 +65,13 @@ class Config
         ["id" => "5", "name" => "Бухгалтерия, финансы"],
         ["id" => "6", "name" => "Управление персоналом, HR"],
         ["id" => "7", "name" => "Производство, сырье, с/х"],
-        ["id" => "8", "name" => "Строительство, недвижимость"]
+        ["id" => "8", "name" => "Строительство, недвижимость"],
     ];
 
     public const DEMO_RESUMES = [
         ["id" => "resume_1", "title" => "Python разработчик"],
         ["id" => "resume_2", "title" => "Frontend разработчик"],
-        ["id" => "resume_3", "title" => "Менеджер по продажам"]
+        ["id" => "resume_3", "title" => "Менеджер по продажам"],
     ];
 
     public const DEMO_VACANCIES = [
@@ -71,21 +80,21 @@ class Config
             "name" => "Python разработчик",
             "employer" => ["name" => "ТехКомпания"],
             "salary" => ["from" => 100000, "to" => 150000, "currency" => "RUR"],
-            "area" => ["name" => "Москва"]
+            "area" => ["name" => "Москва"],
         ],
         [
             "id" => "vacancy_2",
             "name" => "Frontend разработчик React",
             "employer" => ["name" => "Веб-студия"],
             "salary" => ["from" => 80000, "to" => 120000, "currency" => "RUR"],
-            "area" => ["name" => "Санкт-Петербург"]
+            "area" => ["name" => "Санкт-Петербург"],
         ],
         [
             "id" => "vacancy_3",
             "name" => "Менеджер по продажам",
             "employer" => ["name" => "Торговая компания"],
             "salary" => ["from" => 60000, "to" => 100000, "currency" => "RUR"],
-            "area" => ["name" => "Москва"]
-        ]
+            "area" => ["name" => "Москва"],
+        ],
     ];
 }

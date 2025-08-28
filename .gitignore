@@ -1,4 +1,4 @@
-# виртуальные окружения / IDE / кэш
+# venv / IDE / cache
 .venv/
 venv/
 __pycache__/
@@ -9,7 +9,7 @@ dist/
 build/
 node_modules/
 
-# локальные окружения и ключи
+# env & keys
 .env
 .env.*
 *.env
@@ -20,7 +20,7 @@ node_modules/
 *.crt
 *.cert
 
-# локальные конфиги
+# local configs & secrets
 config.local.*.json
 secrets*.json
 secrets*.yml
@@ -29,14 +29,14 @@ front_bot/config_secrets.py
 backend/app/core/local_settings.py
 backend/app/core/config_prod.py
 
-# базы данных
+# local db
 *.sqlite
 *.db
 
-# зависимости PHP
+# php deps
 front_bot_php/vendor/
 
-# системный мусор
+# os junk
 .DS_Store
 ._*
 Thumbs.db

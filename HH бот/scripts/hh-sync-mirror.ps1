@@ -1,51 +1,161 @@
+<# ======================================================================
+  HH BOT — MIRROR SYNC TO GITHUB
+  Обновляет GitHub-репо из локального источника "как зеркало":
+  пушит ВСЕ ветки/теги/refs, удаляет отсутствующие в источнике.
+
+  Примеры:
+    # из корня проекта (рабочая копия)
+    & ".\HH бот\scripts\hh-sync-mirror.ps1"
+
+    # явные параметры
+    & ".\HH бот\scripts\hh-sync-mirror.ps1" `
+      -Src  "C:\git-public\hh-bot-public" `
+      -Dest "https://github.com/HOT-DOG-hash/hh-bot-public.git"
+
+    # с токеном (или выставь $env:GITHUB_TOKEN):
+    & ".\HH бот\scripts\hh-sync-mirror.ps1" -Token "<ghp_xxx>"
+
+    # автоматом закоммитить ВСЁ перед зеркальным пушем (осознанно!)
+    & ".\HH бот\scripts\hh-sync-mirror.ps1" -CommitAll `
+      -CommitMessage "chore: mirror sync"
+
+  Требования: установленный Git (git --version)
+====================================================================== #>
+
+[CmdletBinding(SupportsShouldProcess = $true)]
 param(
-  [Parameter(Mandatory=$true)] [string]$Source, # путь к исходнику ИЛИ git URL (приватный)
+  # Источник: путь к локальному git-репозиторию (рабочая копия или bare)
+  [string]$Src = (Get-Location).Path,
+
+  # Назначение: HTTPS-URL GitHub-репозитория
   [string]$Dest = "https://github.com/HOT-DOG-hash/hh-bot-public.git",
-  [string[]]$Exclude = @(".env",".env.*","secrets/","*.pem","*.key","*.pfx","*.sqlite","*.db"),
-  [switch]$ScrubHistory,  # включить зачистку истории от путей из -Exclude (нужен git-filter-repo)
-  [switch]$Force          # жёсткий форс-пуш
+
+  # GitHub Personal Access Token (если не задан, возьмём из $env:GITHUB_TOKEN)
+  [string]$Token,
+
+  # Опционально: закоммитить все изменения перед синком (ОСТОРОЖНО!)
+  [switch]$CommitAll,
+
+  # Сообщение коммита для -CommitAll
+  [string]$CommitMessage = "chore: mirror sync",
+
+  # Тихий режим (меньше болтовни)
+  [switch]$Quiet
 )
 
-$ErrorActionPreference="Stop"
-function Need($cmd){ if(-not (Get-Command $cmd -ErrorAction SilentlyContinue)){throw "Команда '$cmd' не найдена"}}
-Need git
+$ErrorActionPreference = "Stop"
 
-$work = Join-Path $env:TEMP ("hh-sync-"+[guid]::NewGuid().ToString("N"))
-New-Item -ItemType Directory -Path $work | Out-Null
-$bare = Join-Path $work "src.git"
+function Info($msg) { if (-not $Quiet) { Write-Host $msg } }
+function Fail($msg) { Write-Error $msg; exit 1 }
 
-if (Test-Path $Source -PathType Container) {
-  if (-not (Test-Path (Join-Path $Source ".git"))) { throw "Папка $Source не git-репозиторий" }
-  git clone --mirror --no-local "$Source" "$bare"
+# --- 0) Предпроверки ----------------------------------------------------
+try { git --version | Out-Null } catch { Fail "Git не найден в PATH. Установи Git и перезапусти PowerShell." }
+
+if (-not (Test-Path $Src)) { Fail "Путь '$Src' не существует." }
+
+# Проверяем, что это git-репозиторий (рабочая копия или bare)
+$IsWorkingCopy = Test-Path (Join-Path $Src ".git")
+$IsBare = $false
+if (-not $IsWorkingCopy) {
+  $hasObjects = Test-Path (Join-Path $Src "objects")
+  $hasRefs    = Test-Path (Join-Path $Src "refs")
+  $hasHead    = Test-Path (Join-Path $Src "HEAD")
+  if ($hasObjects -and $hasRefs -and $hasHead) { $IsBare = $true }
+}
+
+if (-not ($IsWorkingCopy -or $IsBare)) {
+  Fail "Папка '$Src' не выглядит как git-репозиторий (ни .git, ни bare-структура)."
+}
+
+if ($Dest -notmatch '^https://github\.com/.+?/.+?\.git$') {
+  Fail "Ожидается HTTPS-URL GitHub, например: https://github.com/OWNER/REPO.git"
+}
+
+# --- 1) Неожиданные незакоммиченные изменения --------------------------
+if ($IsWorkingCopy) {
+  Push-Location $Src
+  try {
+    $status = git status --porcelain
+    if ($status) {
+      if ($CommitAll) {
+        Info "Обнаружены незакоммиченные изменения — выполняю -CommitAll..."
+        git add -A | Out-Null
+        # коммитим, только если есть staged изменения
+        if ((git diff --cached --name-only)) {
+          git commit -m $CommitMessage | Out-Null
+          Info "Создан коммит: $CommitMessage"
+        } else {
+          Info "Staged изменений нет — коммит пропущен."
+        }
+      } else {
+        Write-Warning "Есть незакоммиченные изменения. Они НЕ попадут в зеркальный пуш!"
+        Write-Warning "Либо закоммить вручную, либо перезапусти с -CommitAll."
+      }
+    }
+  } finally { Pop-Location }
+}
+
+# --- 2) Готовим dest + токен -------------------------------------------
+$EffectiveDest = $Dest
+if ([string]::IsNullOrWhiteSpace($Token)) { $Token = $env:GITHUB_TOKEN }
+if ($Token) {
+  $EffectiveDest = $Dest -replace '^https://', ("https://{0}@" -f $Token)
+  Info "Аутентификация через GitHub token."
 } else {
-  git clone --mirror "$Source" "$bare"
+  Info "Токен не задан. Git может запросить логин/пароль при пуше."
 }
 
-Push-Location $bare
+# --- 3) Mirror-клон во временную папку ----------------------------------
+$tmp = Join-Path $env:TEMP ("hh-sync-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $tmp | Out-Null
+$mirrorPath = Join-Path $tmp "src.git"
+
+Info "Клонирую mirror во временную папку: $mirrorPath"
+if ($PSCmdlet.ShouldProcess("git clone --mirror --no-local", "clone to $mirrorPath")) {
+  git clone --mirror --no-local $Src $mirrorPath | Out-Null
+}
+
+# --- 4) Обновляем ссылки и пушим как зеркало ---------------------------
+Push-Location $mirrorPath
 try {
-  git fetch --all --prune
-  if ($ScrubHistory -and $Exclude.Count -gt 0) {
-    if (-not (Get-Command git-filter-repo -ErrorAction SilentlyContinue)) {
-      Write-Warning "git-filter-repo не установлен — пропускаю зачистку истории"
-    } else {
-      $paths = Join-Path $work "paths.txt"
-      $Exclude | Set-Content -Encoding UTF8 $paths
-      git filter-repo --path-glob :regex --invert-paths --paths-from-file "$paths"
-    }
+  Info "Обновляю ссылки (fetch --all --prune)..."
+  if ($PSCmdlet.ShouldProcess("git fetch --all --prune", "update refs")) {
+    git fetch --all --prune | Out-Null
   }
 
-  $destUrl = $Dest
-  if ($destUrl -match "^https://") {
-    if ($env:GITHUB_TOKEN) {
-      $destUrl = $destUrl -replace "^https://","https://$($env:GITHUB_TOKEN)@"
-      Write-Host "Использую GITHUB_TOKEN из окружения"
+  # LFS (если установлен/нужен)
+  try {
+    git lfs version | Out-Null
+    Info "Git LFS обнаружен — подтягиваю объекты..."
+    if ($PSCmdlet.ShouldProcess("git lfs fetch --all", "fetch lfs")) {
+      git lfs fetch --all | Out-Null
     }
+  } catch { }
+
+  Info "Настраиваю удалённый mirror..."
+  if ($PSCmdlet.ShouldProcess("git remote add mirror", "set remote")) {
+    git remote remove mirror 2>$null | Out-Null
+    git remote add mirror $EffectiveDest
   }
 
-  git remote remove mirror 2>$null | Out-Null
-  git remote add mirror "$destUrl"
-  $flags = @("--prune", ($Force ? "--force" : "--force-with-lease"))
-  git push @flags mirror --mirror
-  Write-Host "Готово ✅"
+  # (необязательная) сверка SHA main (если существует)
+  try {
+    $localMain  = (git for-each-ref --format="%(objectname)" refs/heads/main)
+    if ($localMain) {
+      $remoteMain = (git ls-remote $EffectiveDest main).Split("`t")[0]
+      if ($remoteMain) { Info "Сверка main: локально $localMain | удалённо $remoteMain" }
+    }
+  } catch { }
+
+  Info "Пушу зеркало (branches, tags, refs) с prune..."
+  $pushArgs = @("push","--prune","mirror","--mirror")
+  if ($PSCmdlet.ShouldProcess("git push --mirror --prune", ($pushArgs -join ' '))) {
+    git @pushArgs
+  }
+
+  Info "ЗЕРКАЛО ОБНОВЛЕНО ✅"
 }
-finally { Pop-Location }
+finally {
+  Pop-Location
+  try { Remove-Item -Recurse -Force $tmp } catch { Write-Warning "Не удалось удалить временную папку '$tmp'. Удалите вручную." }
+}

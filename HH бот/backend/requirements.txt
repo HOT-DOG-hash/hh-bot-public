@@ -1,12 +1,12 @@
-# FastAPI и ASGI
+﻿# FastAPI Рё ASGI
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 
-# Работа с БД
+# Р Р°Р±РѕС‚Р° СЃ Р‘Р”
 SQLAlchemy[asyncio]==2.0.34
 asyncpg==0.30.0
 
-# Миграции
+# РњРёРіСЂР°С†РёРё
 alembic==1.13.2
 
 # Redis
@@ -14,17 +14,19 @@ redis[async]==5.0.8
 aiosqlite==0.20.0
 
 
-# Внешние запросы
+# Р’РЅРµС€РЅРёРµ Р·Р°РїСЂРѕСЃС‹
 httpx==0.28.1
 
-# Конфигурации
+# РљРѕРЅС„РёРіСѓСЂР°С†РёРё
 pydantic-settings==2.6.1
 python-dotenv==1.0.1
 
-# Логирование и утилиты
+# Р›РѕРіРёСЂРѕРІР°РЅРёРµ Рё СѓС‚РёР»РёС‚С‹
 structlog==24.4.0
 
-# Тесты
+# РўРµСЃС‚С‹
 pytest==8.3.3
 pytest-asyncio==0.23.8
 httpx[cli]==0.28.1
+pydantic==2.7.4
+

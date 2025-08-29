@@ -1,5 +1,7 @@
-# hh-bot-public/HH бот/front_bot/requirements.txt
+﻿# hh-bot-public/HH Р±РѕС‚/front_bot/requirements.txt
 python-telegram-bot==22.3
 python-dotenv==1.1.1
 httpx==0.28.1
 aiohttp==3.12.15
+pydantic==2.7.4
+

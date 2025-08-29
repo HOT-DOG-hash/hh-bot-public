@@ -1,112 +1,123 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Offer Bot - Админ панель</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>HH Bot — Admin</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <style>
+    :root { --bg:#0f1115; --fg:#eaeef5; --muted:#9aa4b2; --card:#151924; --acc:#3b82f6; --danger:#ef4444; --ok:#22c55e;}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+    .layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+    .sidebar{background:#0b0e14;border-right:1px solid #1a2130;padding:16px}
+    .sb-title{font-weight:700;margin:0 0 6px;display:flex;gap:8px;align-items:center}
+    .sb-sub{color:var(--muted);margin:0 0 16px}
+    .nav .item{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;color:#cfd6e4;cursor:pointer}
+    .nav .item.active,.nav .item:hover{background:#141a27;color:#fff}
+    .main{padding:20px}
+    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .top .status{display:flex;gap:10px;align-items:center;color:var(--muted)}
+    .wrap{max-width:1100px;margin:0 auto}
+    .card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.25);margin-bottom:16px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    @media (max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:sticky;top:0;z-index:3}}
+    .metric{background:#0b0e14;border:1px solid #1a2130;border-radius:12px;padding:14px}
+    .metric .h{display:flex;justify-content:space-between;color:var(--muted);margin-bottom:6px}
+    .metric .v{font-size:22px;font-weight:700}
+    pre{white-space:pre-wrap;background:#0b0e14;border:1px solid #1a2130;padding:12px;border-radius:10px;overflow:auto}
+    textarea{width:100%;min-height:120px;background:#0b0e14;color:var(--fg);border:1px solid #1a2130;border-radius:10px;padding:10px;outline:none}
+    button{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer}
+    .ghost{background:transparent;border:1px solid #1f2937;color:#cbd5e1}
+    .muted{color:var(--muted)}
+    .badge{display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:4px 8px;font-size:12px}
+    .ok{background:rgba(34,197,94,.15);color:#86efac}
+    .err{background:rgba(239,68,68,.15);color:#fecaca}
+    .toast{position:fixed;right:16px;bottom:16px;background:#111827;color:#e5e7eb;border:1px solid #1f2937;border-radius:10px;padding:10px 14px;opacity:0;transform:translateY(8px);transition:.2s}
+    .toast.show{opacity:1;transform:none}
+    a{color:var(--acc);text-decoration:none}
+    .footer{color:var(--muted);font-size:12px}
+  </style>
 </head>
 <body>
-    <div class="admin-container">
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <h2><i class="fas fa-robot"></i> Get Offer Bot</h2>
-                <p>Админ панель</p>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2 class="sb-title"><i class="fa-solid fa-robot"></i> HH Bot</h2>
+      <p class="sb-sub">Админ-панель</p>
+      <nav class="nav">
+        <div class="item active" data-page="dashboard"><i class="fa-solid fa-chart-line"></i><span>Дашборд</span></div>
+        <div class="item" data-page="broadcasts"><i class="fa-solid fa-bullhorn"></i><span>Рассылки</span></div>
+        <!-- Фичи будущих релизов можно вернуть после появления API -->
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="wrap">
+        <div class="top">
+          <h1 id="page-title">Дашборд</h1>
+          <div class="status"><span id="authState" class="badge ok"><i class="fa-solid fa-lock"></i> Авторизовано</span>
+            <button id="resetAuthBtn" class="ghost">Сбросить авторизацию</button></div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <section id="page-dashboard">
+          <div class="card">
+            <div class="row"><button id="reloadBtn">Обновить метрики</button>
+              <span id="loadState" class="muted">Ожидание…</span></div>
+            <div class="grid" style="margin-top:12px">
+              <div class="metric">
+                <div class="h"><span>Всего пользователей</span><i class="fa-solid fa-users"></i></div>
+                <div id="mTotal" class="v">—</div>
+              </div>
+              <div class="metric">
+                <div class="h"><span>Активные за сегодня</span><i class="fa-solid fa-user-check"></i></div>
+                <div id="mActive" class="v">—</div>
+              </div>
+              <div class="metric">
+                <div class="h"><span>Поисков за 24ч</span><i class="fa-solid fa-magnifying-glass"></i></div>
+                <div id="mSearches" class="v">—</div>
+              </div>
             </div>
-            
-            <ul class="sidebar-menu">
-                <li class="menu-item active" data-page="dashboard">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Дашборд</span>
-                </li>
-                <li class="menu-item" data-page="users">
-                    <i class="fas fa-users"></i>
-                    <span>Пользователи</span>
-                </li>
-                <li class="menu-item" data-page="subscriptions">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Подписки</span>
-                </li>
-                <li class="menu-item" data-page="responses">
-                    <i class="fas fa-paper-plane"></i>
-                    <span>Отклики</span>
-                </li>
-                <li class="menu-item" data-page="auto-responses">
-                    <i class="fas fa-magic"></i>
-                    <span>Автоотклики</span>
-                </li>
-                <li class="menu-item" data-page="ai-responses">
-                    <i class="fas fa-brain"></i>
-                    <span>AI-отклики</span>
-                </li>
-                <li class="menu-item" data-page="analytics">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Аналитика</span>
-                </li>
-                <li class="menu-item" data-page="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span>Уведомления</span>
-                </li>
-                <li class="menu-item" data-page="bot-settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Настройки бота</span>
-                </li>
-                <li class="menu-item" data-page="messages">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>Рассылки</span>
-                </li>
-                <li class="menu-item" data-page="integrations">
-                    <i class="fas fa-plug"></i>
-                    <span>Интеграции</span>
-                </li>
-                <li class="menu-item" data-page="modules">
-                    <i class="fas fa-puzzle-piece"></i>
-                    <span>Разделы</span>
-                </li>
-                <li class="menu-item" data-page="texts">
-                    <i class="fas fa-edit"></i>
-                    <span>Тексты</span>
-                </li>
-                <li class="menu-item" data-page="pricing">
-                    <i class="fas fa-tags"></i>
-                    <span>Тарифы</span>
-                </li>
-                <li class="menu-item" data-page="logs">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Логи</span>
-                </li>
-            </ul>
-        </nav>
+            <div style="margin-top:12px" class="muted">Источник: <code>/api/admin/metrics</code></div>
+          </div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="top-header">
-                <div class="header-left">
-                    <h1 id="page-title">Дашборд</h1>
-                </div>
-                <div class="header-right">
-                    <div class="bot-status">
-                        <span class="status-indicator online"></span>
-                        <span>Бот онлайн</span>
-                    </div>
-                    <div class="admin-profile">
-                        <i class="fas fa-user-circle"></i>
-                        <span>Администратор</span>
-                    </div>
-                </div>
-            </header>
+          <div class="card">
+            <h3 style="margin:0 0 8px">Сырой ответ API</h3>
+            <pre id="metricsRaw">—</pre>
+          </div>
 
-            <div class="content-area" id="content-area">
-                <!-- Content will be loaded here -->
+          <div class="footer">Примечание: Basic Auth безопасна только по HTTPS. На проде включите TLS (Cloudflare/Certbot).</div>
+        </section>
+
+        <!-- BROADCASTS -->
+        <section id="page-broadcasts" style="display:none">
+          <div class="card">
+            <h2 style="margin:0 0 8px">Новая рассылка</h2>
+            <textarea id="bcText" placeholder="Текст сообщения для рассылки…"></textarea>
+            <div class="row" style="margin-top:10px">
+              <button id="sendBtn"><i class="fa-solid fa-paper-plane"></i> Отправить</button>
+              <button id="dryBtn" class="ghost"><i class="fa-solid fa-vial"></i> Тест (dry-run)</button>
+              <span class="muted">Отправка: всем пользователям (если не указать список <code>chat_ids</code>)</span>
             </div>
-        </main>
-    </div>
+            <div class="muted" style="margin-top:8px">Endpoint: <code>POST /api/admin/broadcasts</code></div>
+          </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="toast"></div>
+          <div class="card">
+            <h3 style="margin:0 0 8px">Пример payload</h3>
+            <pre>{
+  "text": "Ваше сообщение",
+  "chat_ids": [ /* опционально: 123, 456 */ ]
+}</pre>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
-    <script src="script.js"></script>
+  <div id="toast" class="toast"></div>
+  <!-- Абсолютный путь, чтобы работать и под / и под /admin/ -->
+  <script src="/script.js"></script>
 </body>
 </html>

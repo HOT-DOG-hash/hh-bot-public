@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 from redis.asyncio import from_url as redis_from_url
 
-from app.core.config import settings
+from backend.app.core.config import settings
 
 router = APIRouter()
 
@@ -37,3 +37,4 @@ async def health():
 
     overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
     return HealthResponse(status=overall, checks=checks)
+

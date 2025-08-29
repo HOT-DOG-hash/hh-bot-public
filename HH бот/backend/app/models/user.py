@@ -1,7 +1,7 @@
 # app/models/user.py
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
-from app.models.base import Base
+from backend.app.models.base import Base
 
 class User(Base):
     id = Column(Integer, primary_key=True, index=True)
@@ -11,3 +11,4 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     resumes = relationship("Resume", back_populates="user", cascade="all, delete-orphan")
+

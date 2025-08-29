@@ -1,5 +1,5 @@
 from redis.asyncio import Redis
-from app.core.config import settings
+from backend.app.core.config import settings
 
 redis: Redis | None = None
 
@@ -14,3 +14,4 @@ async def close_redis():
     if redis:
         await redis.aclose()
         redis = None
+

@@ -1,7 +1,7 @@
 import logging
 import structlog
 from pathlib import Path
-from app.core.config import settings
+from backend.app.core.config import settings
 
 def setup_logging():
     level_name = str(settings.log_level).upper()
@@ -23,3 +23,4 @@ def setup_logging():
     return structlog.get_logger()
 
 logger = setup_logging()
+

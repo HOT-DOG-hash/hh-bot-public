@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  db:
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  web:
+    env_file:
+      - .env.dev
+    working_dir: "/app/HH бот"
+    entrypoint: ["python","-m","uvicorn"]
+    command: ["backend.main:app","--host","0.0.0.0","--port","8000"]
+    healthcheck:
+      test: ["CMD","python","-c","import socket; s=socket.socket(); s.settimeout(1); s.connect(('127.0.0.1', 8000)); s.close()"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+
+volumes:
+  pg_data:

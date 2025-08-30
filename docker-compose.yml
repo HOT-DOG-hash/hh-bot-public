@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hh}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - pgdata:/var/lib/postgresql/data     # единое имя тома (pgdata)
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hh} -d ${POSTGRES_DB:-hh}"]
       interval: 10s
@@ -31,25 +31,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # берём переменные из файла внутри папки с кириллицей
     env_file:
-      - "./HH бот/.env.dev"
-    # работаем внутри каталога с кириллицей (так проще относительные импорты/пути)
+      - ./.env
     working_dir: "/app/HH бот"
-    # гарантируем корректный импорт пакетов "backend.*"
     environment:
       PYTHONPATH: "/app:/app/HH бот"
       TZ: ${TZ:-UTC}
-      # БД можно не дублировать здесь, т.к. DATABASE_URL уже подставится
-      # из env_file или соберётся из .env базового compose через переменные.
-    # надёжный запуск uvicorn + корректная подстановка env (нужны двойные $)
     command:
       - sh
       - -lc
       - "python -m uvicorn $${APP_MODULE:-backend.app.main:app} --host 0.0.0.0 --port $${WEB_PORT:-8000}"
     expose:
       - "8000"
-    # healthcheck без curl — на чистом python
+    volumes:
+      - web_logs:/var/log/app
     healthcheck:
       test: ["CMD","python","-c","import os,socket; s=socket.socket(); s.settimeout(1); s.connect(('127.0.0.1', int(os.getenv('WEB_PORT','8000')))); s.close()"]
       interval: 10s
@@ -67,7 +62,10 @@ services:
       context: .
       dockerfile: Dockerfile
     entrypoint: ["/bot/entrypoint.sh"]
+    env_file:
+      - ./.env
     environment:
+      PYTHONPATH: "/app:/app/HH бот"
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}
       BOT_TOKEN: ${BOT_TOKEN:-${TELEGRAM_BOT_TOKEN}}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-hh}:${POSTGRES_PASSWORD:-hh}@db:5432/${POSTGRES_DB:-hh}
@@ -82,10 +80,9 @@ services:
         condition: service_healthy
       cache:
         condition: service_healthy
-      web:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'python -u /bot/main.py' || exit 1"]
+      # Без pgrep: читаем командную строку PID 1 и ищем наш runner.py
+      test: ["CMD-SHELL", "tr '\\0' ' ' </proc/1/cmdline | grep -q 'HH бот/bot/runner.py'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -101,7 +98,8 @@ services:
     ports:
       - "80:80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      # Только статический healthz — больше никаких 502
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -111,3 +109,4 @@ volumes:
   pgdata:
   redisdata:
   botlogs:
+  web_logs:

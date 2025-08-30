@@ -40,3 +40,4 @@ front_bot_php/vendor/
 .DS_Store
 ._*
 Thumbs.db
+.diagnostics/

@@ -43,3 +43,6 @@ Thumbs.db
 .diagnostics/
 .diagnostics/
 .diagnostics/
+.env
+.env.*
+HH бот/.env.dev

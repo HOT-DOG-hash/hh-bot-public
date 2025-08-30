@@ -43,3 +43,7 @@ Thumbs.db
 .diagnostics/
 .diagnostics/
 .diagnostics/
+.diagnostics/
+*.log
+*.env
+*.env.*

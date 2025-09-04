@@ -1,18 +1,40 @@
-# venv / IDE / cache
+# --- Python venv / cache / builds
 .venv/
 venv/
 __pycache__/
 *.pyc
-.idea/
-.vscode/
+*.pyo
+*.pyd
+*.egg-info/
 dist/
 build/
-node_modules/
 
-# env & keys
+# --- IDE / OS junk
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+._*
+*.log
+desktop.ini
+
+# --- Node / PHP
+node_modules/
+front_bot_php/vendor/
+*.phar            # composer.phar и др. бинарники PHP
+
+# --- Databases
+*.sqlite
+*.db
+
+# --- ENV & keys (keep example!)
 .env
-.env.*
+.env.prod
+.env.bak
 *.env
+!.env.example     # <-- шаблон значений храним в репо
+HH бот/.env.dev
+nginx/htpasswd
 *.pem
 *.key
 *.p12
@@ -20,29 +42,37 @@ node_modules/
 *.crt
 *.cert
 
-# local configs & secrets
+# --- Local configs that must not be committed
 config.local.*.json
 secrets*.json
 secrets*.yml
 front_bot/.env
 front_bot/config_secrets.py
+
+# Если это реальный код — лучше его не игнорировать,
+# а вынести секреты в ENV. Пока оставляем:
 backend/app/core/local_settings.py
 backend/app/core/config_prod.py
 
-# local db
-*.sqlite
-*.db
+# --- Test/Lint/Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
-# php deps
-front_bot_php/vendor/
+# --- Secret scanners & mirrors (артефакты)
+tools/reports/
+.mirror.git/
+.remote-mirror.git/
+gitleaks-history.json
+trufflehog-*.json
+trufflehog-files.json
 
-# os junk
-.DS_Store
-._*
-Thumbs.db
+# --- Project-specific runtime/logs
+logs/
 .diagnostics/
-.diagnostics/
-.diagnostics/
-.env
-.env.*
-HH бот/.env.dev
+
+# --- Docker local overrides (если не хочешь держать их в репо)
+docker-compose.override.yml

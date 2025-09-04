@@ -1,0 +1,128 @@
+name: CI & CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: HOT-DOG-hash         # поменяй при необходимости
+  WEB_IMAGE: ghcr.io/HOT-DOG-hash/hh-bot-web
+  BOT_IMAGE: ghcr.io/HOT-DOG-hash/hh-bot-bot
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ➜ Проверка секретов (падает, если находит токены/пароли)
+      - name: Secrets scan (gitleaks)
+        uses: zricethezav/gitleaks-action@v2
+        with:
+          args: detect --no-banner --redact
+          # Если положишь кастомный конфиг в репо (gitleaks.toml), раскомментируй:
+          # config-path: gitleaks.toml
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps (tools + project)
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Ruff (lint)
+        run: ruff check .
+
+      - name: Mypy (types)
+        run: mypy --ignore-missing-imports .
+
+      - name: Check if tests exist
+        id: has_tests
+        run: |
+          if ls -d tests 2>/dev/null; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pytest
+        if: steps.has_tests.outputs.found == 'true'
+        run: pytest -q
+
+  build-and-push:
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Образ web
+      - name: Build & Push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: web  # если нет мульти-стейджа — убери строку target
+          push: true
+          tags: |
+            ${{ env.WEB_IMAGE }}:latest
+            ${{ env.WEB_IMAGE }}:${{ github.sha }}
+
+      # Образ bot
+      - name: Build & Push bot
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: bot  # если нет отдельной цели — укажи тот же Dockerfile и другой CMD в compose.prod.yml
+          push: true
+          tags: |
+            ${{ env.BOT_IMAGE }}:latest
+            ${{ env.BOT_IMAGE }}:${{ github.sha }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: true
+          script: |
+            set -e
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+
+            cd ~/hh-bot && git pull || true
+            # Предполагаем, что на сервере лежит docker-compose.prod.yml
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            docker image prune -f

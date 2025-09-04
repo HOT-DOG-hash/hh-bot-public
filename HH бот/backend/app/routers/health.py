@@ -1,40 +1,75 @@
-from fastapi import APIRouter
+# backend/app/routers/health.py
+from __future__ import annotations
+
+import os
+from typing import Dict, Literal
+
+from fastapi import APIRouter, Query, Response, status
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 from redis.asyncio import from_url as redis_from_url
 
-from backend.app.core.config import settings
-
-router = APIRouter()
+router = APIRouter(tags=["health"])
 
 class HealthResponse(BaseModel):
-    status: str
-    checks: dict
+    status: Literal["ok", "degraded"]
+    checks: Dict[str, str]
 
-@router.get("/health", response_model=HealthResponse)
-async def health():
-    checks: dict[str, str] = {}
-
-    # --- Redis check ---
+async def _check_redis() -> str:
+    url = os.getenv("REDIS_URL", "").strip()
+    if not url:
+        return "skip"
     try:
-        r = redis_from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
+        r = redis_from_url(url, encoding="utf-8", decode_responses=True)
         pong = await r.ping()
         await r.close()
-        checks["redis"] = "ok" if pong else "fail"
+        return "ok" if pong else "fail"
     except Exception as e:
-        checks["redis"] = f"fail: {e.__class__.__name__}"
+        return f"fail:{e.__class__.__name__}"
 
-    # --- DB check ---
+async def _check_db() -> str:
+    url = os.getenv("DATABASE_URL", "").strip()
+    if not url:
+        return "skip"
+    engine = create_async_engine(url, future=True)
     try:
-        engine = create_async_engine(settings.database_url, future=True)
         async with engine.begin() as conn:
             await conn.execute(text("SELECT 1"))
-        await engine.dispose()
-        checks["db"] = "ok"
+        return "ok"
     except Exception as e:
-        checks["db"] = f"fail: {e.__class__.__name__}"
+        return f"fail:{e.__class__.__name__}"
+    finally:
+        await engine.dispose()
 
-    overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
+def _overall_status(checks: Dict[str, str]) -> Literal["ok", "degraded"]:
+    return "ok" if all(v in ("ok", "skip") for v in checks.values()) else "degraded"
+
+@router.get("/health", response_model=HealthResponse)
+async def health(strict: bool = Query(False, description="Вернуть 503, если есть 'fail'")):
+    checks: Dict[str, str] = {
+        "redis": await _check_redis(),
+        "db": await _check_db(),
+    }
+    overall = _overall_status(checks)
+    if strict and overall != "ok":
+        return Response(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=HealthResponse(status=overall, checks=checks).model_dump_json(),
+            media_type="application/json",
+        )
     return HealthResponse(status=overall, checks=checks)
 
+@router.get("/healthz", response_class=Response)
+async def healthz(strict: bool = Query(False, description="Вернуть 503, если есть 'fail'")):
+    """
+    Узкий текстовый зонд, совместимый с некоторыми оркестраторами.
+    Nginx свой /healthz держит локально; этот эндпойнт — backend-эквивалент.
+    """
+    checks: Dict[str, str] = {
+        "redis": await _check_redis(),
+        "db": await _check_db(),
+    }
+    overall = _overall_status(checks)
+    code = status.HTTP_200_OK if (overall == "ok" or not strict) else status.HTTP_503_SERVICE_UNAVAILABLE
+    return Response(content=("ok" if overall == "ok" else "degraded"), media_type="text/plain", status_code=code)

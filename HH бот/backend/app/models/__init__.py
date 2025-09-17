@@ -1,7 +1,7 @@
 # app/models/__init__.py
-from backend.app.models.base import Base
-from backend.app.models.user import User
-from backend.app.models.resume import Resume
+from .base import Base
+# Важно импортировать модели, чтобы они зарегистрировались в Base.metadata
+from .user import User
+from .resume import Resume
 
 __all__ = ["Base", "User", "Resume"]
-

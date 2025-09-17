@@ -1,7 +1,5 @@
-version: "3.9"
-
 x-logging-json: &logging_json
-  driver: "json-file"
+  driver: json-file
   options:
     max-size: "10m"
     max-file: "5"
@@ -12,10 +10,10 @@ x-common-secure: &common_secure
   stop_grace_period: "30s"
   security_opt:
     - no-new-privileges:true
-  cap_drop: ["ALL"]
+  cap_drop:
+    - ALL
   read_only: true
-  tmpfs:
-    - /tmp
+  tmpfs: [ /tmp ]
   logging: *logging_json
   restart: unless-stopped
 
@@ -31,14 +29,17 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hh} -d ${POSTGRES_DB:-hh}"]
+      test: ["CMD-SHELL","pg_isready -U ${POSTGRES_USER:-hh} -d ${POSTGRES_DB:-hh}"]
       interval: 10s
       timeout: 5s
-      retries: 5
-    <<: *common_secure
-    # БД должна быть writable:
+      retries: 10
+    security_opt: []
+    cap_drop: []
     read_only: false
     tmpfs: []
+    init: true
+    restart: unless-stopped
+    logging: *logging_json
 
   cache:
     image: redis:7-alpine
@@ -46,136 +47,140 @@ services:
     volumes:
       - redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    <<: *common_secure
-    # Redis пишет снапшоты:
+      test: ["CMD","redis-cli","ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt: []
+    cap_drop: []
     read_only: false
     tmpfs: []
+    init: true
+    restart: unless-stopped
+    logging: *logging_json
 
   web:
-    # Гибрид: и image, и build (для локалки можно билдить; на проде обычно только pull)
-    image: ${WEB_IMAGE:-ghcr.io/HOT-DOG-hash/hh-bot-web:latest}
     build:
       context: .
       dockerfile: Dockerfile
       target: web
-    env_file:
-      - ./.env
+    env_file: [ ./.env ]
     working_dir: "/app/HH бот"
     environment:
       PYTHONPATH: "/app:/app/HH бот"
       TZ: ${TZ:-UTC}
-
-      # BasicAuth (единые имена)
       ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASS: ${ADMIN_PASS:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASS:-admin}
-
-      # Надёжные дефолты (исправлен лишний '}')
+      ADMIN_SECRET_TOKEN: ${ADMIN_SECRET_TOKEN:-dev-token}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-hh}:${POSTGRES_PASSWORD:-hh}@db:5432/${POSTGRES_DB:-hh}}
       REDIS_URL: ${REDIS_URL:-redis://cache:6379/0}
       SECRET_KEY: ${SECRET_KEY:-dev-not-secret}
-      ADMIN_SECRET_TOKEN: ${ADMIN_SECRET_TOKEN:-dev-token}
       APP_ENV: ${APP_ENV:-prod}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       WEB_PORT: ${WEB_PORT:-8000}
       APP_MODULE: ${APP_MODULE:-backend.app.main:app}
-    command:
-      - sh
-      - -lc
-      - "python -m uvicorn $${APP_MODULE} --host 0.0.0.0 --port $${WEB_PORT}"
-    expose:
-      - "8000"
+      APP_VERSION: ${APP_VERSION:-dev}
+    command: ["sh","-lc","python -m uvicorn $${APP_MODULE} --host 0.0.0.0 --port $${WEB_PORT}"]
+    expose: [ "8000" ]
     volumes:
       - web_logs:/var/log/app
     healthcheck:
-      # Минимальный TCP-check (не зависит от роутинга в коде)
-      test: ["CMD","python","-c","import os,socket; s=socket.socket(); s.settimeout(1); s.connect(('127.0.0.1', int(os.getenv('WEB_PORT','8000')))); s.close()"]
+      test: ["CMD-SHELL","curl -fsS http://127.0.0.1:$${WEB_PORT}/api/health || exit 1"]
       interval: 10s
-      timeout: 3s
+      timeout: 5s
       retries: 12
     depends_on:
-      db:
-        condition: service_healthy
-      cache:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      cache: { condition: service_healthy }
     <<: *common_secure
-    # web пишет логи в volume:
     read_only: false
-    tmpfs:
-      - /tmp
+    tmpfs: [ /tmp ]
 
   bot:
-    image: ${BOT_IMAGE:-ghcr.io/HOT-DOG-hash/hh-bot-bot:latest}
     build:
       context: .
       dockerfile: Dockerfile
       target: bot
-    env_file:
-      - ./.env
+    env_file: [ ./.env ]
     working_dir: "/app/HH бот"
-    entrypoint:
-      - /bin/bash
-      - -lc
-      - 'exec "/app/HH бот/bot/entrypoint.sh"'
+    entrypoint: ["/bin/bash","-lc","exec \"/app/HH бот/bot/entrypoint.sh\""]
     environment:
       PYTHONPATH: "/app:/app/HH бот"
       TZ: ${TZ:-UTC}
-
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       BOT_TOKEN: ${BOT_TOKEN:-${TELEGRAM_BOT_TOKEN}}
-
-      # Исправлен лишний '}'
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS: ${ADMIN_PASS:-admin}
+      ADMIN_SECRET_TOKEN: ${ADMIN_SECRET_TOKEN:-dev-token}
+      SECRET_KEY: ${SECRET_KEY:-dev-not-secret}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-hh}:${POSTGRES_PASSWORD:-hh}@db:5432/${POSTGRES_DB:-hh}}
       REDIS_URL: ${REDIS_URL:-redis://cache:6379/0}
-
       BOT_LOG_DIR: /var/log/app
       BOT_LOG_FILE: /var/log/app/bot.log
     volumes:
       - botlogs:/var/log/app
     depends_on:
-      db:
-        condition: service_healthy
-      cache:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      cache: { condition: service_healthy }
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "bash -lc 'pgrep -f \"bot/runner.py\" >/dev/null'"
-        ]
+      test: ["CMD-SHELL","pgrep -f 'bot/runner.py' >/dev/null"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     <<: *common_secure
-    # бот пишет логи в volume:
     read_only: false
-    tmpfs:
-      - /tmp
+    tmpfs: [ /tmp ]
 
   nginx:
     image: nginx:1.27-alpine
     depends_on:
-      web:
-        condition: service_healthy
+      web: { condition: service_healthy }
+    # оставляем доступ только локально (для проверок); Cloudflare Tunnel ходит по docker-сети
+    ports:
+      - "127.0.0.1:80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      # - ./adminka_dist:/usr/share/nginx/html:ro
-    ports:
-      - "80:80"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    <<: *common_secure
-    # nginx должен читать конфиг/слушать сокеты:
+      - ./nginx/html:/usr/share/nginx/html:ro
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
     read_only: true
     tmpfs:
       - /tmp
+      - /var/cache/nginx
+    cap_drop: [ "ALL" ]
+    cap_add: [ "NET_BIND_SERVICE","CHOWN","SETUID","SETGID" ]
+    security_opt: [ "no-new-privileges:true" ]
+    command: >
+      sh -lc 'set -eu;
+              for d in client_temp proxy_temp fastcgi_temp uwsgi_temp scgi_temp; do
+                mkdir -p "/var/cache/nginx/$$d";
+                chmod 0777 "/var/cache/nginx/$$d";
+              done;
+              exec nginx -g "daemon off;"'
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://127.0.0.1/healthz | grep -q ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging_json
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: ["tunnel","--no-autoupdate","run","--token","${CF_TUNNEL_TOKEN}"]
+    environment:
+      CF_TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+    depends_on:
+      - nginx
+    network_mode: "service:nginx"   # <— ключевая строка
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging_json
+    # при необходимости добавь тот же network, что и у nginx (обычно default достаточно)
+    # networks:
+    #   - default
 
 volumes:
   pgdata:

@@ -17,6 +17,8 @@ Thumbs.db
 ._*
 *.log
 desktop.ini
+*.swp
+*.swo
 
 # --- Node / PHP
 node_modules/
@@ -27,20 +29,32 @@ front_bot_php/vendor/
 *.sqlite
 *.db
 
-# --- ENV & keys (keep example!)
+# --- ENV (keep example!)
 .env
-.env.prod
-.env.bak
-*.env
-!.env.example     # <-- шаблон значений храним в репо
+.env.*
+!.env.example
+# частные для проекта
 HH бот/.env.dev
-nginx/htpasswd
-*.pem
-*.key
-*.p12
-*.keystore
-*.crt
-*.cert
+
+# --- Alembic локальные
+HH бот/backend/alembic.ini.local
+
+# --- PHP vendor уже есть; composer.lock лучше хранить в репозитории (для app)
+# front_bot_php/vendor/ (оставляем)
+# НЕ игнорируем composer.lock
+
+
+# --- TLS/SSH keys & certs (глобально, в любых папках)
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.crt
+**/*.cer
+**/*.cert
+**/id_rsa
+**/id_dsa
+**/known_hosts
 
 # --- Local configs that must not be committed
 config.local.*.json
@@ -59,6 +73,7 @@ backend/app/core/config_prod.py
 .mypy_cache/
 .ruff_cache/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
 
@@ -69,10 +84,19 @@ tools/reports/
 gitleaks-history.json
 trufflehog-*.json
 trufflehog-files.json
+secrets-findings.json
+secrets-findings.*.json
 
-# --- Project-specific runtime/logs
+# --- Project-specific runtime/logs & diagnostics
 logs/
 .diagnostics/
+diag_bundle/
 
-# --- Docker local overrides (если не хочешь держать их в репо)
+# --- Nginx local-only bits
+nginx/.htpasswd
+nginx/nginx.conf.safe
+# (nginx/html/ и конфиги nginx НЕ игнорируем, если они часть репо)
+
+# --- Docker local overrides
 docker-compose.override.yml
+docker-compose.local.yml

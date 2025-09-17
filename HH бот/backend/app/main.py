@@ -1,4 +1,3 @@
-# backend/app/main.py
 from __future__ import annotations
 
 import os
@@ -9,33 +8,27 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI
-
-# python-telegram-bot 20.x
 from telegram import BotCommand, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-# .env подхват (опционально)
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
 except Exception:
     pass
 
-# ------------------------------
-# ЛОГИ
-# ------------------------------
 def setup_logging() -> None:
-    log_file = os.getenv("BOT_LOG_FILE", "/var/log/app/bot.log")
+    log_file = os.getenv("BOT_LOG_FILE", "/var/log/app/app.log")
     Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+    level = getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)
     logging.basicConfig(
-        level=logging.INFO,
+        level=level,
         format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler(log_file, encoding="utf-8")],
     )
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("telegram.vendor.ptb_urllib3.urllib3").setLevel(logging.WARNING)
 
-# ------------------------------
-# TELEGRAM BOT helpers
-# ------------------------------
 def _get_token() -> Optional[str]:
     return os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("BOT_TOKEN")
 
@@ -43,16 +36,14 @@ def build_bot_application(token: str) -> Application:
     application = Application.builder().token(token).build()
 
     async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text("Бот запущен. Команды временно упрощены.")
+        if update.message:
+            await update.message.reply_text("Бот запущен. Команды временно упрощены.")
 
     application.add_handler(CommandHandler("start", start_cmd))
-    commands = [BotCommand("start", "Начать / Перезапустить")]
-    application.bot_data["__commands__"] = commands
+    application.bot_data["__commands__"] = [BotCommand("start", "Начать / Перезапустить")]
     return application
 
 async def start_bot(app_: FastAPI) -> None:
-    setup_logging()
-
     token = _get_token()
     if not token:
         logging.info("Telegram token is missing — bot disabled.")
@@ -60,7 +51,6 @@ async def start_bot(app_: FastAPI) -> None:
         return
 
     application = build_bot_application(token)
-
     await application.initialize()
     try:
         await application.bot.set_my_commands(application.bot_data.get("__commands__", []))
@@ -68,8 +58,6 @@ async def start_bot(app_: FastAPI) -> None:
         logging.warning("Failed to set bot commands: %s", e)
 
     await application.start()
-
-    # попытка использовать updater (если доступен в твоей сборке)
     try:
         await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)  # type: ignore[attr-defined]
     except Exception:
@@ -96,12 +84,9 @@ async def stop_bot(app_: FastAPI) -> None:
         app_.state.bot_state = {"running": False}
         app_.state.ptb_app = None
 
-# ------------------------------
-# LIFESPAN (вместо on_event)
-# ------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # startup
+    setup_logging()
     if os.getenv("ENABLE_TELEGRAM_BOT", "0") == "1":
         await start_bot(app)
     else:
@@ -109,30 +94,34 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        # shutdown
         await stop_bot(app)
 
-# ------------------------------
-# APP и роутеры
-# ------------------------------
 app = FastAPI(title="HH Bot API", lifespan=lifespan)
 
-# Основные роутеры
 from .routers import admin as admin_router
 from .routers import health as health_router
 
-app.include_router(admin_router.router, prefix="")   # /admin/...
-app.include_router(health_router.router, prefix="")  # /health, /healthz
+app.include_router(admin_router.router, prefix="")
+app.include_router(health_router.router, prefix="")
 
-# Дополнительные роутеры (не критично, если их нет)
+# Алиасы на /health и /api/health(+z)
 try:
-    from .routers import bot_api, admin_api  # type: ignore
-    app.include_router(bot_api.router, prefix="/api/bot")
-    app.include_router(admin_api.router, prefix="/api/admin")
+    from .routers.health import health as health_ep, healthz as healthz_ep  # type: ignore
+    app.add_api_route("/health", endpoint=health_ep, methods=["GET"], name="health_root_alias")
+    app.add_api_route("/healthz", endpoint=healthz_ep, methods=["GET"], name="healthz_root_alias")
+    app.add_api_route("/api/health", endpoint=health_ep, methods=["GET"], name="health_api_alias")
+    app.add_api_route("/api/healthz", endpoint=healthz_ep, methods=["GET"], name="healthz_api_alias")
 except Exception as e:
-    logging.warning("Optional routers weren't loaded: %s", e)
+    logging.warning("Health aliases not set: %s", e)
 
-# Локальный запуск (обычно используешь uvicorn извне)
+@app.get("/", tags=["meta"])
+def root():
+    return {"app": "hh-bot", "status": "ok", "version": os.getenv("APP_VERSION", "dev")}
+
+@app.get("/version", tags=["meta"])
+def version():
+    return {"version": os.getenv("APP_VERSION", "dev")}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

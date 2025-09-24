@@ -1,233 +1,233 @@
-./
-  .github/
-    .github\hooks/
-      .github\hooks\pre-commit
-    .github\workflows/
-      .github\workflows\ci-cd.yml
-      .github\workflows\secrets-scan.yml
-  alembic/
-    alembic\versions/
-    alembic\env.py
-    alembic\README
-    alembic\script.py.mako
-  diag_bundle/
-    diag_bundle\diag_report.json
-    diag_bundle\docker-compose.yml
-    diag_bundle\Dockerfile
-    diag_bundle\nginx.conf
-  front_bot/
-    front_bot\routers/
-      front_bot\routers\start.py
-  HH бот/
-    HH бот\adminka/
-      HH бот\adminka\index.html
-      HH бот\adminka\script.js
-      HH бот\adminka\styles.css
-      HH бот\adminka\user-profile.html
-      HH бот\adminka\user-profile.js
-    HH бот\backend/
-      HH бот\backend\alembic/
-        HH бот\backend\alembic\versions/
-          HH бот\backend\alembic\versions\20250828_init.py
-      HH бот\backend\app/
-        HH бот\backend\app\core/
-          HH бот\backend\app\core\__init__.py
-          HH бот\backend\app\core\config.py
-          HH бот\backend\app\core\db.py
-          HH бот\backend\app\core\logging.py
-          HH бот\backend\app\core\redis.py
-        HH бот\backend\app\models/
-          HH бот\backend\app\models\schemas/
-            HH бот\backend\app\models\schemas\__init__.py
-            HH бот\backend\app\models\schemas\resume.py
-            HH бот\backend\app\models\schemas\user.py
-          HH бот\backend\app\models\__init__.py
-          HH бот\backend\app\models\base.py
-          HH бот\backend\app\models\resume.py
-          HH бот\backend\app\models\user.py
-        HH бот\backend\app\routers/
-          HH бот\backend\app\routers\admin_api/
-            HH бот\backend\app\routers\admin_api\__init__.py
-            HH бот\backend\app\routers\admin_api\broadcasts.py
-            HH бот\backend\app\routers\admin_api\metrics.py
-            HH бот\backend\app\routers\admin_api\users.py
-          HH бот\backend\app\routers\bot_api/
-            HH бот\backend\app\routers\bot_api\__init__.py
-            HH бот\backend\app\routers\bot_api\resume.py
-            HH бот\backend\app\routers\bot_api\search.py
-            HH бот\backend\app\routers\bot_api\stats.py
-          HH бот\backend\app\routers\__init__.py
-          HH бот\backend\app\routers\admin.py
-          HH бот\backend\app\routers\health.py
-          HH бот\backend\app\routers\resumes.py
-        HH бот\backend\app\schemas/
-          HH бот\backend\app\schemas\__init__.py
-          HH бот\backend\app\schemas\resume.py
-          HH бот\backend\app\schemas\user.py
-        HH бот\backend\app\__init__.py
-        HH бот\backend\app\config.py
-        HH бот\backend\app\database.py
-        HH бот\backend\app\main.py
-        HH бот\backend\app\main.py.bak_20250829_140929
-        HH бот\backend\app\main.py.bak_20250829_141723
-        HH бот\backend\app\main.py.bak_20250829_141858
-        HH бот\backend\app\models.py
-        HH бот\backend\app\security_admin.py
-        HH бот\backend\app\security.py
-      HH бот\backend\migrations/
-        HH бот\backend\migrations\versions/
-          HH бот\backend\migrations\versions\7e848df00d1e_schema_check.py
-          HH бот\backend\migrations\versions\90f3375d1ace_init_users_and_resumes.py
-        HH бот\backend\migrations\env.py
-        HH бот\backend\migrations\README
-        HH бот\backend\migrations\script.py.mako
-      HH бот\backend\tests/
-        HH бот\backend\tests\conftest.py
-        HH бот\backend\tests\test_health.py
-        HH бот\backend\tests\test_resumes.py
-        HH бот\backend\tests\test_security_admin.py
-      HH бот\backend\__init__.py
-      HH бот\backend\alembic.ini
-      HH бот\backend\bot_runner.py
-      HH бот\backend\Dockerfile
-      HH бот\backend\README.md
-      HH бот\backend\requirements.txt
-      HH бот\backend\seed_dev.py
-      HH бот\backend\test_import.py
-    HH бот\bot/
-      HH бот\bot\entrypoint.sh
-      HH бот\bot\runner.py
-    HH бот\front_bot/
-      HH бот\front_bot\front_bot/
-      HH бот\front_bot\routers/
-        HH бот\front_bot\routers\__init__.py
-        HH бот\front_bot\routers\auto_responses.py
-        HH бот\front_bot\routers\letters.py
-        HH бот\front_bot\routers\menu.py
-        HH бот\front_bot\routers\responses.py
-        HH бот\front_bot\routers\resume.py
-        HH бот\front_bot\routers\search.py
-        HH бот\front_bot\routers\start.py
-        HH бот\front_bot\routers\stats.py
-      HH бот\front_bot\utils/
-        HH бот\front_bot\utils\__init__.py
-        HH бот\front_bot\utils\buttons.py
-        HH бот\front_bot\utils\helpers.py
-        HH бот\front_bot\utils\states.py
-        HH бот\front_bot\utils\texts.py
-      HH бот\front_bot\__init__.py
-      HH бот\front_bot\config.py
-      HH бот\front_bot\demo_bot_persistence
-      HH бот\front_bot\Dockerfile
-      HH бот\front_bot\entrypoint.sh
-      HH бот\front_bot\hh_client.py
-      HH бот\front_bot\main.py
-      HH бот\front_bot\requirements.txt
-    HH бот\front_bot_php/
-      HH бот\front_bot_php\migrations/
-        HH бот\front_bot_php\migrations\env.py
-        HH бот\front_bot_php\migrations\README
-        HH бот\front_bot_php\migrations\script.py.mako
-      HH бот\front_bot_php\src/
-        HH бот\front_bot_php\src\Config/
-          HH бот\front_bot_php\src\Config\Config.php
-        HH бот\front_bot_php\src\Routers/
-          HH бот\front_bot_php\src\Routers\AutoResponsesRouter.php
-          HH бот\front_bot_php\src\Routers\LettersRouter.php
-          HH бот\front_bot_php\src\Routers\MenuRouter.php
-          HH бот\front_bot_php\src\Routers\ResponsesRouter.php
-          HH бот\front_bot_php\src\Routers\StartRouter.php
-          HH бот\front_bot_php\src\Routers\StatsRouter.php
-        HH бот\front_bot_php\src\Utils/
-          HH бот\front_bot_php\src\Utils\Buttons.php
-          HH бот\front_bot_php\src\Utils\Helpers.php
-          HH бот\front_bot_php\src\Utils\States.php
-          HH бот\front_bot_php\src\Utils\Texts.php
-      HH бот\front_bot_php\alembic.ini
-      HH бот\front_bot_php\bot.php
-      HH бот\front_bot_php\commands.json
-      HH бот\front_bot_php\composer.json
-      HH бот\front_bot_php\composer.lock
-      HH бот\front_bot_php\composer.phar
-      HH бот\front_bot_php\README.md
-    HH бот\scripts/
-      HH бот\scripts\check-all.ps1
-      HH бот\scripts\deploy-prod.ps1
-      HH бот\scripts\down.ps1
-      HH бот\scripts\fix-db-env-and-up.ps1
-      HH бот\scripts\fix-reqs-and-up.ps1
-      HH бот\scripts\hh-check.ps1
-      HH бот\scripts\hh-sync-mirror.ps1
-      HH бот\scripts\migrate.ps1
-      HH бот\scripts\quick-bot-check.ps1
-      HH бот\scripts\reset.ps1
-      HH бот\scripts\restart.ps1
-      HH бот\scripts\set-admin-and-up.ps1
-      HH бот\scripts\setup.ps1
-      HH бот\scripts\smoke.ps1
-      HH бот\scripts\status.ps1
-      HH бот\scripts\up.ps1
-    HH бот\Dockerfile
-  nginx/
-    nginx\html/
-      nginx\html\admin/
-        nginx\html\admin\index.html
-    nginx\nginx.conf.bak/
-    nginx\default.conf
-    nginx\nginx.conf
-    nginx\nginx.conf.safe
-    nginx\nginx.http.conf
-    nginx\nginx.https.conf
-  scripts/
-    scripts\compose-prod-up.ps1
-    scripts\fix-web.ps1
-    scripts\win-fix-db-perms-and-up.ps1
-    scripts\win-fix-web-cmd.ps1
-    scripts\win-fix-web-workingdir.ps1
-  tools/
-    tools\reports/
-      tools\reports\gitleaks-working.json
-      tools\reports\regex-findings.csv
-      tools\reports\regex-findings.txt
-    tools\doctor.ps1
-    tools\git-diagnose.ps1
-    tools\publish-mirror.ps1
-    tools\push-to-github.ps1
-    tools\run-and-diagnose.ps1
-    tools\run-local.ps1
-  alembic.ini
-  certbot-issue-and-list.ps1
-  certbot-issue.ps1
-  certbot-renew.ps1
-  compose-check.ps1
-  docker-compose.cf-http2.yml
-  docker-compose.neon.yml
-  docker-compose.prod.local.yml
-  docker-compose.prod.yml
-  docker-compose.windows.ephemeral.yml
-  docker-compose.windows.pg-remote.yml
-  docker-compose.windows.yml
-  docker-compose.yml
-  Dockerfile
-  domain-probes.ps1
-  ensure-admin.ps1
-  git-commit-main.ps1
-  hhbot_diag.ps1
-  htpasswd-gen.ps1
-  htpasswd-set.ps1
-  http-probes.ps1
-  https-bootstrap.ps1
-  install-precommit-hook.ps1
-  Makefile
-  nginx-diag.ps1
-  nginx-recreate.ps1
-  port80-check.ps1
-  ports-diagnose.ps1
-  push
-  README.md
-  requirements.txt
-  scan-secrets.ps1
-  switch-nginx.ps1
-  tree.txt
-  trufflehog-files.json
-  trufflehog-git.json
+.
+├── .github
+│   ├── hooks
+│   │   └── pre-commit
+│   └── workflows
+│       ├── ci-cd.yml
+│       └── secrets-scan.yml
+├── .mirror.git
+│   ├── objects
+│   │   ├── info
+│   │   │   └── commit-graph
+│   │   └── pack
+│   │       ├── pack-a31e283aa875f067f86b8aa9fad1a1dd050340b9.idx
+│   │       ├── pack-a31e283aa875f067f86b8aa9fad1a1dd050340b9.pack
+│   │       └── pack-a31e283aa875f067f86b8aa9fad1a1dd050340b9.rev
+│   ├── refs
+│   │   ├── heads
+│   │   └── tags
+│   ├── packed-refs
+│   └── trufflehog-git.json
+├── diag_bundle
+│   ├── certbot-run-20250913-193755.log
+│   ├── diag_report.json
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   └── nginx.conf
+├── front_bot
+│   └── routers
+│       └── start.py
+├── HH бот
+│   ├── adminka
+│   │   ├── index.html
+│   │   ├── script.js
+│   │   ├── styles.css
+│   │   ├── user-profile.html
+│   │   └── user-profile.js
+│   ├── backend
+│   │   ├── app
+│   │   │   ├── core
+│   │   │   ├── models
+│   │   │   ├── routers
+│   │   │   ├── schemas
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── main.py
+│   │   │   ├── main.py.bak_20250829_140929
+│   │   │   ├── main.py.bak_20250829_141723
+│   │   │   ├── main.py.bak_20250829_141858
+│   │   │   ├── models.py
+│   │   │   ├── security.py
+│   │   │   └── security_admin.py
+│   │   ├── logs
+│   │   │   └── app.log
+│   │   ├── migrations
+│   │   │   ├── versions
+│   │   │   ├── env.py
+│   │   │   ├── README
+│   │   │   └── script.py.mako
+│   │   ├── tests
+│   │   │   ├── conftest.py
+│   │   │   ├── test_health.py
+│   │   │   ├── test_resumes.py
+│   │   │   └── test_security_admin.py
+│   │   ├── __init__.py
+│   │   ├── alembic.ini
+│   │   ├── bot_runner.py
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   ├── requirements.txt
+│   │   ├── seed_dev.py
+│   │   └── test_import.py
+│   ├── bot
+│   │   ├── entrypoint.sh
+│   │   └── runner.py
+│   ├── front_bot
+│   │   ├── front_bot
+│   │   ├── routers
+│   │   │   ├── __init__.py
+│   │   │   ├── auto_responses.py
+│   │   │   ├── letters.py
+│   │   │   ├── menu.py
+│   │   │   ├── responses.py
+│   │   │   ├── resume.py
+│   │   │   ├── search.py
+│   │   │   ├── start.py
+│   │   │   └── stats.py
+│   │   ├── utils
+│   │   │   ├── __init__.py
+│   │   │   ├── buttons.py
+│   │   │   ├── helpers.py
+│   │   │   ├── states.py
+│   │   │   └── texts.py
+│   │   ├── .dockerignore
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   ├── demo_bot_persistence
+│   │   ├── Dockerfile
+│   │   ├── entrypoint.sh
+│   │   ├── hh_client.py
+│   │   ├── main.py
+│   │   └── requirements.txt
+│   ├── front_bot_php
+│   │   ├── migrations
+│   │   │   ├── env.py
+│   │   │   ├── README
+│   │   │   └── script.py.mako
+│   │   ├── src
+│   │   │   ├── Config
+│   │   │   ├── Routers
+│   │   │   └── Utils
+│   │   ├── vendor
+│   │   │   ├── composer
+│   │   │   ├── graham-campbell
+│   │   │   ├── guzzlehttp
+│   │   │   ├── longman
+│   │   │   ├── monolog
+│   │   │   ├── phpoption
+│   │   │   ├── psr
+│   │   │   ├── ralouphie
+│   │   │   ├── symfony
+│   │   │   ├── vlucas
+│   │   │   └── autoload.php
+│   │   ├── alembic.ini
+│   │   ├── bot.log
+│   │   ├── bot.php
+│   │   ├── commands.json
+│   │   ├── composer.json
+│   │   ├── composer.lock
+│   │   ├── composer.phar
+│   │   └── README.md
+│   ├── scripts
+│   │   ├── check-all.ps1
+│   │   ├── deploy-prod.ps1
+│   │   ├── down.ps1
+│   │   ├── fix-db-env-and-up.ps1
+│   │   ├── fix-reqs-and-up.ps1
+│   │   ├── hh-check.ps1
+│   │   ├── hh-sync-mirror.ps1
+│   │   ├── logs.ps1
+│   │   ├── migrate.ps1
+│   │   ├── quick-bot-check.ps1
+│   │   ├── reset.ps1
+│   │   ├── restart.ps1
+│   │   ├── set-admin-and-up.ps1
+│   │   ├── setup.ps1
+│   │   ├── smoke.ps1
+│   │   ├── status.ps1
+│   │   └── up.ps1
+│   ├── .env.dev
+│   └── Dockerfile
+├── nginx
+│   ├── html
+│   │   └── admin
+│   │       └── index.html
+│   ├── nginx.conf.bak
+│   ├── .htpasswd
+│   ├── default.conf
+│   ├── nginx.conf
+│   ├── nginx.conf.safe
+│   ├── nginx.http.conf
+│   └── nginx.https.conf
+├── ops
+│   ├── systemd
+│   │   ├── certbot-renew.service
+│   │   └── certbot-renew.timer
+│   ├── checklist-P0.md
+│   ├── cleanup-resumes.sh
+│   ├── prepare-secrets.sh
+│   ├── runbooks.md
+│   └── smoke.sh
+├── scripts
+│   ├── compose-prod-up.ps1
+│   ├── fix-web.ps1
+│   ├── win-fix-db-perms-and-up.ps1
+│   ├── win-fix-web-cmd.ps1
+│   └── win-fix-web-workingdir.ps1
+├── tools
+│   ├── reports
+│   │   ├── gitleaks-working.json
+│   │   ├── regex-findings.csv
+│   │   └── regex-findings.txt
+│   ├── doctor.ps1
+│   ├── git-diagnose.ps1
+│   ├── publish-mirror.ps1
+│   ├── push-to-github.ps1
+│   ├── run-and-diagnose.ps1
+│   └── run-local.ps1
+├── .dockerignore
+├── .env
+├── .env.dev
+├── .env.example
+├── .env.prod
+├── .gitattributes
+├── .gitignore
+├── .pre-commit-config.yaml
+├── .secrets-allow
+├── alembic.ini
+├── ANALYZE.md
+├── certbot-issue-and-list.ps1
+├── certbot-issue.ps1
+├── certbot-renew.ps1
+├── compose-check.ps1
+├── docker-compose.cf-http2.yml
+├── docker-compose.neon.yml
+├── docker-compose.prod.local.yml
+├── docker-compose.prod.yml
+├── docker-compose.windows.ephemeral.yml
+├── docker-compose.windows.pg-remote.yml
+├── docker-compose.windows.yml
+├── docker-compose.yml
+├── Dockerfile
+├── domain-probes.ps1
+├── ensure-admin.ps1
+├── git-commit-main.ps1
+├── hhbot_diag.ps1
+├── htpasswd-gen.ps1
+├── htpasswd-set.ps1
+├── http-probes.ps1
+├── https-bootstrap.ps1
+├── install-precommit-hook.ps1
+├── Makefile
+├── nginx-diag.ps1
+├── nginx-recreate.ps1
+├── port80-check.ps1
+├── ports-diagnose.ps1
+├── README.md
+├── requirements.txt
+├── scan-secrets.ps1
+├── switch-nginx.ps1
+├── tree.txt
+├── trufflehog-files.json
+└── trufflehog-git.json

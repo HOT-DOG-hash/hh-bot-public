@@ -1,0 +1,11 @@
+services:
+  cloudflared:
+    # ОБЯЗАТЕЛЬНО подключай этот файл ПОСЛЕДНИМ, чтобы команда переопределилась.
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --protocol
+      - http2
+      - --token
+      - ${CF_TUNNEL_TOKEN}

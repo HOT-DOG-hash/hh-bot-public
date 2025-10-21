@@ -1,32 +1,26 @@
 # Dev/Test Setup Snapshot
 
-## Tooling
-- Python: python3 -V → Python 3.12.3
-- uv: uv --version → uv 0.9.4
+## Инструменты
+- Python: команда python3 -V (текущее значение 3.12.3)
+- uv: команда uv --version (текущее значение 0.9.4)
+- Docker ≥ 24 (для временного Postgres)
 
-## Dependency bootstrap
-Commands:
-  uv venv
-  source .venv/bin/activate
-  uv pip install -r requirements.txt -r requirements-dev.txt
+## Установка зависимостей
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt -r requirements-dev.txt
 
-## Alembic smoke (temp Postgres postgres:16-alpine @ 127.0.0.1:54329)
-Commands:
-  alembic downgrade base
-  alembic upgrade head
-  alembic downgrade base
-  alembic upgrade head
-  alembic heads
-  alembic history --verbose | tail -n 20
-Result: ✅ — single head p0_4_user_applications after round-trip.
+## Alembic smoke (Postgres 16)
+./scripts/smoke_alembic.sh
+Скрипт поднимает контейнер на свободном порту, выполняет два цикла downgrade base → upgrade head и удаляет контейнер.
 
-## Pytest status
-Commands:
-  source .venv/bin/activate
-  pytest -q
-Result: ❌ — sqlite metadata & legacy relationships still block full suite (needs Postgres fixtures).
+## Тесты
+Пока нет единой матрицы SQLite/Postgres. Фактический статус:
+- pytest -m "not pg" — ⚠️ маркеров и фикстур ещё нет (исторические тесты ожидают Postgres).
+- pytest -m pg — ⚠️ требует PG-фикстур и актуализации тестов.
 
-## Notes
-- Added scripts/smoke_alembic.sh for CI smoke run.
-- requirements*.txt, pytest.ini capture canonical dev/test baseline.
-- Pending: wire Postgres fixtures or relax sqlite metadata to make pytest green.
+## TODO
+- Восстановить соответствие ORM↔миграции (alembic autogenerate даёт диффы).
+- Разнести тесты по SQLite/PG и настроить фикстуры.
+- Привести pytest к зелёному состоянию.
+- Снять технический долг по проверкам (LOGIC_SUMMARY.md, релизный чек-лист).

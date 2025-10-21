@@ -113,17 +113,24 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_audit_logs_created_at", table_name="audit_logs")
-    op.drop_index("ix_audit_logs_action", table_name="audit_logs")
-    op.drop_table("audit_logs")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    tables = set(inspector.get_table_names())
 
-    op.drop_index("ix_subscriptions_status", table_name="subscriptions")
-    op.drop_index("ix_subscriptions_user_id", table_name="subscriptions")
-    op.drop_table("subscriptions")
+    if "audit_logs" in tables:
+        op.drop_index("ix_audit_logs_created_at", table_name="audit_logs")
+        op.drop_index("ix_audit_logs_action", table_name="audit_logs")
+        op.drop_table("audit_logs")
 
-    op.drop_index("ix_payments_status", table_name="payments")
-    op.drop_index("ix_payments_user_id", table_name="payments")
-    op.drop_table("payments")
+    if "subscriptions" in tables:
+        op.drop_index("ix_subscriptions_status", table_name="subscriptions")
+        op.drop_index("ix_subscriptions_user_id", table_name="subscriptions")
+        op.drop_table("subscriptions")
+
+    if "payments" in tables:
+        op.drop_index("ix_payments_status", table_name="payments")
+        op.drop_index("ix_payments_user_id", table_name="payments")
+        op.drop_table("payments")
 
     op.drop_column("users", "hh_token_expires_at")
     op.drop_column("users", "hh_refresh_token")

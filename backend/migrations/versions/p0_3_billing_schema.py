@@ -30,20 +30,93 @@ def _create_enums() -> tuple[sa.Enum, sa.Enum, sa.Enum, sa.Enum]:
     dialect = bind.dialect.name
     is_postgres = dialect in {"postgresql", "postgres", "psycopg"}
 
-    plan_period_enum = sa.Enum("trial", "week", "month", name="plan_period_enum")
-    subscription_status_enum = sa.Enum(
-        "trialing", "active", "past_due", "canceled", "expired", name="subscription_status_enum"
-    )
-    payment_status_enum = sa.Enum(
-        "pending", "succeeded", "canceled", "expired", "failed", name="payment_status_enum"
-    )
-    provider_enum = sa.Enum("yoomoney", name="provider_enum")
-
     if is_postgres:
-        plan_period_enum.create(bind, checkfirst=True)
-        subscription_status_enum.create(bind, checkfirst=True)
-        payment_status_enum.create(bind, checkfirst=True)
-        provider_enum.create(bind, checkfirst=True)
+        op.execute(
+            sa.text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_type WHERE typname = 'plan_period_enum'
+                    ) THEN
+                        CREATE TYPE plan_period_enum AS ENUM ('trial', 'week', 'month');
+                    END IF;
+                END$$
+                """
+            )
+        )
+        op.execute(
+            sa.text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_type WHERE typname = 'subscription_status_enum'
+                    ) THEN
+                        CREATE TYPE subscription_status_enum AS ENUM (
+                            'trialing', 'active', 'past_due', 'canceled', 'expired'
+                        );
+                    END IF;
+                END$$
+                """
+            )
+        )
+        op.execute(
+            sa.text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_type WHERE typname = 'payment_status_enum'
+                    ) THEN
+                        CREATE TYPE payment_status_enum AS ENUM (
+                            'pending', 'succeeded', 'canceled', 'expired', 'failed'
+                        );
+                    END IF;
+                END$$
+                """
+            )
+        )
+        op.execute(
+            sa.text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_type WHERE typname = 'provider_enum'
+                    ) THEN
+                        CREATE TYPE provider_enum AS ENUM ('yoomoney');
+                    END IF;
+                END$$
+                """
+            )
+        )
+        enum_cls = sa.dialects.postgresql.ENUM
+        enum_kwargs = {"create_type": False}
+    else:
+        enum_cls = sa.Enum
+        enum_kwargs = {}
+
+    plan_period_enum = enum_cls("trial", "week", "month", name="plan_period_enum", **enum_kwargs)
+    subscription_status_enum = enum_cls(
+        "trialing",
+        "active",
+        "past_due",
+        "canceled",
+        "expired",
+        name="subscription_status_enum",
+        **enum_kwargs,
+    )
+    payment_status_enum = enum_cls(
+        "pending",
+        "succeeded",
+        "canceled",
+        "expired",
+        "failed",
+        name="payment_status_enum",
+        **enum_kwargs,
+    )
+    provider_enum = enum_cls("yoomoney", name="provider_enum", **enum_kwargs)
 
     return plan_period_enum, subscription_status_enum, payment_status_enum, provider_enum
 

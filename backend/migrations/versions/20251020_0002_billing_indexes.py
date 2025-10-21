@@ -63,17 +63,26 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("uq_subscriptions_active_user_plan", table_name="subscriptions")
-    op.drop_index("ix_subscriptions_user_status", table_name="subscriptions")
-    with op.batch_alter_table("subscriptions") as batch_op:
-        batch_op.create_unique_constraint("uq_subscriptions_user_plan", ["user_id", "plan"])
-    op.drop_column("subscriptions", "active")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    tables = set(inspector.get_table_names())
 
-    op.drop_index("ix_payments_user_status_created", table_name="payments")
-    with op.batch_alter_table("payments") as batch_op:
-        batch_op.drop_constraint("uq_payments_external_id", type_="unique")
-        batch_op.create_unique_constraint(
-            "uq_payments_provider_external_id", ["provider", "external_id"]
-        )
+    if "subscriptions" in tables:
+        if bind.dialect.name in {"postgresql", "postgres", "psycopg"}:
+            op.execute(sa.text("DROP INDEX IF EXISTS uq_subscriptions_active_user_plan"))
+            op.execute(sa.text("DROP INDEX IF EXISTS ix_subscriptions_user_status"))
+        else:
+            op.drop_index("uq_subscriptions_active_user_plan", table_name="subscriptions")
+            op.drop_index("ix_subscriptions_user_status", table_name="subscriptions")
+        with op.batch_alter_table("subscriptions") as batch_op:
+            batch_op.create_unique_constraint("uq_subscriptions_user_plan", ["user_id", "plan"])
+        op.drop_column("subscriptions", "active")
 
-    op.drop_column("payments", "plan")
+    if "payments" in tables:
+        op.drop_index("ix_payments_user_status_created", table_name="payments")
+        with op.batch_alter_table("payments") as batch_op:
+            batch_op.drop_constraint("uq_payments_external_id", type_="unique")
+            batch_op.create_unique_constraint(
+                "uq_payments_provider_external_id", ["provider", "external_id"]
+            )
+        op.drop_column("payments", "plan")

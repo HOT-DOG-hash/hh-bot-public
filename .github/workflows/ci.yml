@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "chore/dedupe-backend"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv pip install -r requirements.txt -r requirements-dev.txt
+      - run: ruff check backend
+      - run: mypy backend
+      - run: bash scripts/smoke_alembic.sh
+      - run: uvx pytest -q

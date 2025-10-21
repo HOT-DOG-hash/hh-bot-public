@@ -39,7 +39,7 @@ front_bot_php/vendor/
 HH бот/.env.dev
 
 # --- Alembic локальные
-HH бот/backend/alembic.ini.local
+backend/alembic.ini.local
 
 # --- PHP vendor уже есть; composer.lock лучше хранить в репозитории (для app)
 # front_bot_php/vendor/ (оставляем)
@@ -109,3 +109,12 @@ docker-compose.local.yml
 
 # Project secrets
 secrets/
+
+# === dedupe & caches ===
+.mypy_cache/
+**/__pycache__/
+.ruff_cache/
+.pytest_cache/
+.mirror.git/
+var/log/
+*.pyc

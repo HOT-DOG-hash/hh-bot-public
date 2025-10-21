@@ -2,7 +2,7 @@
 
 ## 1. Срез структуры и инфраструктуры
 - `hh-bot-public/` — основной монорепозиторий.
-  - `HH бот/backend/` — FastAPI-приложение, async SQLAlchemy (`core/db.py`), платежный сервис YooMoney (`services/billing.py`, `payments/`), alembic-модели и миграции.
+  - `backend/` — FastAPI-приложение, async SQLAlchemy (`core/db.py`), платежный сервис YooMoney (`services/billing.py`, `payments/`), alembic-модели и миграции.
   - `HH бот/bot/` — телеграм-бот, entrypoint в `entrypoint.sh`.
   - `admin_front/` и `HH бот/adminka/` — фронтенд админки (Vite/React + статика).
   - `nginx/` — конфиги обратного прокси и basic auth.

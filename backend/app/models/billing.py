@@ -144,7 +144,6 @@ class ApplicationQuota(Base, TimestampMixin):
             "consumed >= 0 AND consumed <= granted",
             name="ck_application_quotas_consumed_range",
         ),
-        Index("ix_application_quotas_user_id", "user_id"),
         Index(
             "uq_application_quotas_trial_once_per_user",
             "user_id",

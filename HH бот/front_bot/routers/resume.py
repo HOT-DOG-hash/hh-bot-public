@@ -1,9 +1,12 @@
+import os
+
+import aiohttp
 from aiogram import Router
 from aiogram.types import Message
-import aiohttp, os
 
 router = Router()
 API_BASE = os.getenv("API_BASE", "http://web:8000")
+
 
 @router.message()
 async def catch_resume(message: Message):
@@ -28,9 +31,12 @@ async def catch_resume(message: Message):
                 content = await r.read()
             form = aiohttp.FormData()
             form.add_field("chat_id", str(message.chat.id))
-            form.add_field("file", content,
-                           filename=message.document.file_name,
-                           content_type=message.document.mime_type or "application/octet-stream")
+            form.add_field(
+                "file",
+                content,
+                filename=message.document.file_name,
+                content_type=message.document.mime_type or "application/octet-stream",
+            )
             async with s.post(f"{API_BASE}/api/resumes/", data=form) as r2:
                 ok = (await r2.json()).get("ok")
         if ok:

@@ -1,6 +1,6 @@
+from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, Depends
 
 from ...core.db import get_db
 from ...models import SearchQuery, User

@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import secrets
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -20,13 +19,11 @@ def _get_admin_creds() -> tuple[str, str]:
     """
     user = (os.getenv("ADMIN_USER") or "").strip()
 
-    pwd: Optional[str] = os.getenv("ADMIN_PASS")
+    pwd: str | None = os.getenv("ADMIN_PASS")
     if not pwd:
         legacy = os.getenv("ADMIN_PASSWORD")
         if legacy:
-            _log.warning(
-                "Using legacy env var ADMIN_PASSWORD — please migrate to ADMIN_PASS."
-            )
+            _log.warning("Using legacy env var ADMIN_PASSWORD — please migrate to ADMIN_PASS.")
             pwd = legacy
 
     return user, (pwd or "").strip()

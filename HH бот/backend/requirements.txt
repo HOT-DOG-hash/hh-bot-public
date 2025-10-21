@@ -29,4 +29,3 @@ pytest==8.3.3
 pytest-asyncio==0.23.8
 httpx[cli]==0.28.1
 pydantic==2.7.4
-

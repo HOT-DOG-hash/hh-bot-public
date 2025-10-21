@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timezone
-from typing import Optional
 
 import aiofiles
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -36,8 +35,8 @@ async def _persist_file(chat_id: int, upload: UploadFile, file_name: str) -> str
 @router.post("/")
 async def upload_resume(
     chat_id: int = Form(..., description="Telegram chat id"),
-    text: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None),
+    text: str | None = Form(None),
+    file: UploadFile | None = File(None),
     db: AsyncSession = Depends(get_db),
 ):
     if file is None and not text:
@@ -52,8 +51,8 @@ async def upload_resume(
 
     user.last_activity = datetime.now(timezone.utc)
 
-    file_path: Optional[str] = None
-    file_name_hint: Optional[str] = file.filename if file and file.filename else None
+    file_path: str | None = None
+    file_name_hint: str | None = file.filename if file and file.filename else None
     if file is not None:
         safe_name = _sanitize_filename(file_name_hint or "file")
         file_path = await _persist_file(chat_id, file, safe_name)

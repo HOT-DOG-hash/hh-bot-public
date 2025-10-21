@@ -1,7 +1,8 @@
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_health(client):
-    r = await client.get("/healthz")
-    assert r.status_code == 200
-    assert r.json()["status"] == "ok"
+    response = await client.get("/healthz")
+    assert response.status_code == 200
+    assert response.text.strip() == "ok"

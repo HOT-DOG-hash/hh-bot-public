@@ -366,7 +366,7 @@ class ResponsesRouter
 
         // Извлекаем ID профессии из callback_data
         $professionId = str_replace('profession_', '', $callbackQuery->getData());
-        
+
         $selected = $userData['profession_selection'] ?? [];
         if (in_array($professionId, $selected)) {
             $selected = array_diff($selected, [$professionId]);
@@ -398,7 +398,7 @@ class ResponsesRouter
         $callbackQuery = $update->getCallbackQuery();
         $professions = Config::DEMO_PROFESSIONS;
         $allIds = array_column($professions, 'id');
-        
+
         $selected = $userData['profession_selection'] ?? [];
         if (count($selected) === count($allIds) && empty(array_diff($allIds, $selected))) {
             $userData['profession_selection'] = [];
@@ -429,7 +429,7 @@ class ResponsesRouter
         $callbackQuery = $update->getCallbackQuery();
         $data = $callbackQuery->getData();
         $page = (int)str_replace('page_profession_nav_', '', $data);
-        
+
         $professions = Config::DEMO_PROFESSIONS;
 
         Request::answerCallbackQuery([

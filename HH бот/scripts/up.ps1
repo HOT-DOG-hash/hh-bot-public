@@ -1,4 +1,4 @@
-<# 
+<#
   Сборка и запуск стека в фоне + ожидание readiness.
   Запуск: powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
 #>

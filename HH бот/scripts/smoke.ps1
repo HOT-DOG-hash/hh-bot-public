@@ -1,4 +1,4 @@
-<# 
+<#
   Smoke-тесты readiness/liveness.
   Параметры:
     -Wait : ждать готовности (polling)

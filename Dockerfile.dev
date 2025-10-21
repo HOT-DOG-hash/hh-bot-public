@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential git curl ca-certificates pkg-config \
+    libpq-dev openssh-client bash tini \
+  && rm -rf /var/lib/apt/lists/*
+
+# Установка uv (быстрая альтернатива pip); добавить в PATH
+RUN curl -fsSL https://astral.sh/uv/install.sh | sh \
+  && install -m 0755 /root/.local/bin/uv /usr/local/bin/uv \
+  && install -m 0755 /root/.local/bin/uvx /usr/local/bin/uvx
+ENV PATH="/root/.local/bin:${PATH}"
+
+WORKDIR /app
+RUN useradd -m dev && chown -R dev:dev /app
+USER dev
+
+# Не падай, если файлов зависимостей нет — ставь позже через scripts/dev_check.sh
+COPY --chown=dev:dev . .
+ENTRYPOINT ["/usr/bin/tini","--"]
+CMD ["bash"]

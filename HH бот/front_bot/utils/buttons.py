@@ -7,5 +7,5 @@ SEARCH_FIELD_OPTIONS = {
 # Кнопки для автооткликов
 AUTO_RESPONSE_SEARCH_METHOD_OPTIONS = {
     "configure_filters": "🔎 Настроить фильтры в боте",
-    "paste_hh_link": "🌐 Вставить ссылку поиска hh.ru"
+    "paste_hh_link": "🌐 Вставить ссылку поиска hh.ru",
 }

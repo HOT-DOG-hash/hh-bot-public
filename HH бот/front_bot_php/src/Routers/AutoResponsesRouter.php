@@ -32,7 +32,7 @@ class AutoResponsesRouter
 
         // Проверяем статус автооткликов
         $autoResponsesActive = $userData['auto_responses_active'] ?? false;
-        
+
         if ($autoResponsesActive) {
             // Показываем активный статус
             $startDate = $userData['auto_responses_start_date'] ?? date('d.m.Y');

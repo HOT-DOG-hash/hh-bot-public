@@ -1,4 +1,4 @@
-<# 
+<#
   Быстрый рестарт только прикладных сервисов.
   Запуск: powershell -ExecutionPolicy Bypass -File .\scripts\restart.ps1
 #>

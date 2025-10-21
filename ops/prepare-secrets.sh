@@ -39,4 +39,3 @@ htpasswd -cbB "$HTPASSWD_PATH" "$USER_NAME" "$ADMIN_PASS" >/dev/null
 chmod 600 "$HTPASSWD_PATH"
 
 echo "[prepare] secrets updated at $ENV_PATH"
-

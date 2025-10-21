@@ -1,4 +1,4 @@
-<# 
+<#
   Применение миграций Alembic внутри контейнера web.
   Запуск: powershell -ExecutionPolicy Bypass -File .\scripts\migrate.ps1
 #>

@@ -1,11 +1,10 @@
 # seed_dev.py
 import asyncio
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import AsyncSessionLocal
-from app.models.user import User
 from app.models.resume import Resume
+from app.models.user import User
+from sqlalchemy import select
 
 
 async def main():

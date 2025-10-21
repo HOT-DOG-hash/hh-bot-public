@@ -1,27 +1,26 @@
 """unify schema
 
 Revision ID: 20250924_unify_schema
-Revises: 
+Revises:
 Create Date: 2025-09-24 18:00:00.000000
 """
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20250924_unify_schema"
-down_revision: Union[str, Sequence[str], None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
-def _rename_legacy_tables(table_names: set[str]) -> Dict[str, str]:
-    renamed: Dict[str, str] = {}
+def _rename_legacy_tables(table_names: set[str]) -> dict[str, str]:
+    renamed: dict[str, str] = {}
     for original in ("user", "users"):
         if original in table_names:
             legacy = "users_legacy"
@@ -58,14 +57,24 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("tg_id", sa.String(length=50), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
-        sa.Column("last_activity", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
+        sa.Column(
+            "last_activity",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
             nullable=True,
-            server_default=sa.text("NOW()"),
-            server_onupdate=sa.text("NOW()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+            server_onupdate=sa.text("CURRENT_TIMESTAMP"),
         ),
         sa.UniqueConstraint("tg_id", name="uq_users_tg_id"),
     )
@@ -75,10 +84,17 @@ def upgrade() -> None:
     op.create_table(
         "search_queries",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("chat_id", sa.BigInteger(), nullable=True),
         sa.Column("query", sa.String(length=512), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
     )
     op.create_index("ix_search_queries_user_id", "search_queries", ["user_id"], unique=False)
     op.create_index("ix_search_queries_chat_id", "search_queries", ["chat_id"], unique=False)
@@ -87,31 +103,38 @@ def upgrade() -> None:
     op.create_table(
         "resumes",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("title", sa.String(length=255), nullable=True),
         sa.Column("text", sa.Text(), nullable=True),
         sa.Column("file_path", sa.String(length=1024), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
             nullable=True,
-            server_default=sa.text("NOW()"),
-            server_onupdate=sa.text("NOW()"),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+            server_onupdate=sa.text("CURRENT_TIMESTAMP"),
         ),
     )
     op.create_index("ix_resumes_user_id", "resumes", ["user_id"], unique=False)
     op.create_index("ix_resumes_created_at", "resumes", ["created_at"], unique=False)
 
-    users_map_by_legacy_id: Dict[int, int] = {}
-    users_map_by_chat: Dict[str, int] = {}
+    users_map_by_legacy_id: dict[int, int] = {}
+    users_map_by_chat: dict[str, int] = {}
 
     if "users" in legacy.values():
         # nothing to migrate
         pass
 
     if legacy.get("users"):
-        rows = list(bind.execute(sa.text(f"SELECT * FROM {legacy['users']}" )).mappings())
+        rows = list(bind.execute(sa.text(f"SELECT * FROM {legacy['users']}")).mappings())
         for row in rows:
             chat_id_value = None
             if "tg_id" in row and row["tg_id"]:
@@ -129,7 +152,7 @@ def upgrade() -> None:
                 sa.text(
                     """
                     INSERT INTO users (tg_id, is_active, last_activity, created_at, updated_at)
-                    VALUES (:tg_id, :is_active, COALESCE(:last_activity, NOW()), COALESCE(:created_at, NOW()), :updated_at)
+                    VALUES (:tg_id, :is_active, COALESCE(:last_activity, CURRENT_TIMESTAMP), COALESCE(:created_at, CURRENT_TIMESTAMP), :updated_at)
                     RETURNING id
                     """
                 ),
@@ -148,7 +171,7 @@ def upgrade() -> None:
             users_map_by_chat[tg_id] = new_id
         op.drop_table(legacy["users"])
 
-    def _ensure_user_for_chat(chat_id: Union[int, str, None]) -> int | None:
+    def _ensure_user_for_chat(chat_id: int | str | None) -> int | None:
         if chat_id is None:
             return None
         key = str(chat_id)
@@ -158,7 +181,7 @@ def upgrade() -> None:
             sa.text(
                 """
                 INSERT INTO users (tg_id, is_active, last_activity, created_at, updated_at)
-                VALUES (:tg_id, true, NOW(), NOW(), NOW())
+                VALUES (:tg_id, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 ON CONFLICT (tg_id) DO UPDATE SET tg_id = EXCLUDED.tg_id
                 RETURNING id
                 """
@@ -170,7 +193,7 @@ def upgrade() -> None:
         return new_id
 
     if legacy.get("resumes"):
-        rows = list(bind.execute(sa.text(f"SELECT * FROM {legacy['resumes']}" )).mappings())
+        rows = list(bind.execute(sa.text(f"SELECT * FROM {legacy['resumes']}")).mappings())
         for row in rows:
             target_user_id = None
             legacy_user_id = row.get("user_id")
@@ -184,7 +207,7 @@ def upgrade() -> None:
                 sa.text(
                     """
                     INSERT INTO resumes (id, user_id, title, text, file_path, created_at, updated_at)
-                    VALUES (:id, :user_id, :title, :text, :file_path, COALESCE(:created_at, NOW()), :updated_at)
+                    VALUES (:id, :user_id, :title, :text, :file_path, COALESCE(:created_at, CURRENT_TIMESTAMP), :updated_at)
                     ON CONFLICT (id) DO NOTHING
                     """
                 ),
@@ -201,7 +224,7 @@ def upgrade() -> None:
         op.drop_table(legacy["resumes"])
 
     if legacy.get("search_queries"):
-        rows = list(bind.execute(sa.text(f"SELECT * FROM {legacy['search_queries']}" )).mappings())
+        rows = list(bind.execute(sa.text(f"SELECT * FROM {legacy['search_queries']}")).mappings())
         for row in rows:
             target_user_id = None
             legacy_user_id = row.get("user_id")
@@ -215,7 +238,7 @@ def upgrade() -> None:
                 sa.text(
                     """
                     INSERT INTO search_queries (id, user_id, chat_id, query, created_at)
-                    VALUES (:id, :user_id, :chat_id, :query, COALESCE(:created_at, NOW()))
+                    VALUES (:id, :user_id, :chat_id, :query, COALESCE(:created_at, CURRENT_TIMESTAMP))
                     ON CONFLICT (id) DO NOTHING
                     """
                 ),

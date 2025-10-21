@@ -1,7 +1,11 @@
-import sys, pathlib
-sys.path.append(str(pathlib.Path("migrations").resolve().parent))
+import pathlib
+import sys
 
-from app.models import Base
-tables = list(Base.metadata.tables.keys())
-print("OK, tables:", tables)
-assert "user" in tables and "resume" in tables, "Метаданные не видят модели user/resume"
+base_dir = pathlib.Path(__file__).resolve().parents[1]
+sys.path.append(str(base_dir))
+
+from backend.app.models import Base
+
+_tables = list(Base.metadata.tables.keys())
+print("OK, tables:", _tables)
+assert "users" in _tables and "resumes" in _tables, "ожидались таблицы users/resumes"

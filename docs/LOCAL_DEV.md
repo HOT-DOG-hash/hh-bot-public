@@ -51,6 +51,51 @@ docker compose --env-file .\.env.local exec -T web alembic current
 ```
 - Head as of 2025-10-05: `20250924_unify_schema` (see `_artifacts/_alembic.txt`).
 
+## Secrets
+| Secret | File | Env fallback | Purpose |
+| ------ | ---- | ------------ | ------- |
+| HH OAuth client id | `secrets/hh_client_id.txt` | `HH_CLIENT_ID` | HeadHunter OAuth flow |
+| HH OAuth client secret | `secrets/hh_client_secret.txt` | `HH_CLIENT_SECRET` | HeadHunter OAuth flow |
+| YooMoney shop id | `secrets/yoomoney_client_id.txt` | `YOOMONEY_CLIENT_ID` | Billing provider |
+| YooMoney secret key | `secrets/yoomoney_client_secret.txt` | `YOOMONEY_CLIENT_SECRET` | Billing provider |
+| Cloudflare tunnel token | `secrets/cf_tunnel_token.txt` | — | Named tunnel auth (see docs/tunnel-token/README.md) |
+
+Create placeholders locally without committing real values:
+```powershell
+Set-Content -Path secrets\hh_client_id.txt -Value "<client-id>" -NoNewline
+Set-Content -Path secrets\hh_client_secret.txt -Value "<client-secret>" -NoNewline
+Set-Content -Path secrets\yoomoney_client_id.txt -Value "<shop-id>" -NoNewline
+Set-Content -Path secrets\yoomoney_client_secret.txt -Value "<shop-secret>" -NoNewline
+```
+
+## Backend Smoke Tests
+```powershell
+python -m pip install -r requirements.txt
+pytest -q
+pytest tests/test_billing_smoke.py -q
+pytest tests/test_hh_oauth_jobs.py -q
+```
+- `make test` wraps `python -m pytest -q`.
+- Tests stub YooMoney and HH integrations; no external network calls are performed.
+
+## OAuth & Billing Scenarios
+1. Ensure Redis is available (`docker compose up -d cache`) or use the mocked fixtures from the tests above.
+2. HH login redirect:
+   ```powershell
+   curl -I "http://localhost:8000/oauth/hh/login?chat_id=<CHAT_ID>"
+   ```
+   Expect `302` with `Location` pointing to `https://hh.ru/oauth/authorize?...`.
+3. Subscription read (after linking a user or seeding data):
+   ```powershell
+   curl -sS "http://localhost:8000/billing/subscription" -H "X-User-Id: <USER_KEY>"
+   ```
+   Returns JSON with `active`, `plan`, `until`.
+4. HH vacancies (requires active subscription and valid tokens in the database):
+   ```powershell
+   curl -sS "http://localhost:8000/jobs/search?q=python" -H "X-User-Id: <USER_KEY>"
+   ```
+   For dry runs on dev data, rely on `tests/test_hh_oauth_jobs.py`.
+
 ## Health Checks
 ```
 curl -s -o NUL -w "%{http_code}" http://localhost:80/healthz

@@ -1,4 +1,4 @@
-<# 
+<#
   Хвост логов и лайв-стрим (прерывание Ctrl+C).
   Параметры:
     -Service web|bot|nginx|db|cache (по умолчанию web,bot,nginx)

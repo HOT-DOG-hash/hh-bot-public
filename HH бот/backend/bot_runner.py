@@ -1,8 +1,10 @@
-import os
 import logging
+import os
 from pathlib import Path
+
 from telegram import BotCommand, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+
 
 def setup_logging() -> None:
     log_file = os.getenv("BOT_LOG_FILE", "/var/log/app/bot.log")
@@ -13,8 +15,10 @@ def setup_logging() -> None:
         handlers=[logging.StreamHandler(), logging.FileHandler(log_file, encoding="utf-8")],
     )
 
+
 def _get_token():
     return os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("BOT_TOKEN")
+
 
 async def post_init(app: Application):
     try:
@@ -22,13 +26,9 @@ async def post_init(app: Application):
     except Exception as e:
         logging.warning("Failed to set bot commands: %s", e)
 
+
 def build_bot_application(token: str) -> Application:
-    application = (
-        Application.builder()
-        .token(token)
-        .post_init(post_init)
-        .build()
-    )
+    application = Application.builder().token(token).post_init(post_init).build()
 
     async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Бот запущен (standalone).")
@@ -36,6 +36,7 @@ def build_bot_application(token: str) -> Application:
     application.add_handler(CommandHandler("start", start_cmd))
     application.bot_data["__commands__"] = [BotCommand("start", "Начать / Перезапустить")]
     return application
+
 
 async def main():
     setup_logging()
@@ -46,6 +47,8 @@ async def main():
     # run_polling сам вызовет initialize/start/stop
     await app.run_polling(allowed_updates=Update.ALL_TYPES)
 
+
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

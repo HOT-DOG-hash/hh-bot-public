@@ -2,11 +2,14 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+
 def make_app():
     from backend.app.routers.admin import router as admin_router
+
     app = FastAPI()
     app.include_router(admin_router)
     return app
+
 
 def test_admin_unauthorized(monkeypatch):
     # пустые креды → всегда 401
@@ -18,6 +21,7 @@ def test_admin_unauthorized(monkeypatch):
     assert r.status_code == 401
     assert r.headers.get("www-authenticate", "").lower().startswith("basic")
 
+
 def test_admin_wrong(monkeypatch):
     monkeypatch.setenv("ADMIN_USER", "admin")
     monkeypatch.setenv("ADMIN_PASS", "secret")
@@ -25,6 +29,7 @@ def test_admin_wrong(monkeypatch):
     c = TestClient(app)
     r = c.get("/admin/ping", auth=("admin", "wrong"))
     assert r.status_code == 401
+
 
 def test_admin_ok(monkeypatch):
     monkeypatch.setenv("ADMIN_USER", "admin")

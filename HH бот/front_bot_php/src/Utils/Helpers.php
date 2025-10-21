@@ -21,16 +21,16 @@ class Helpers
     ): InlineKeyboard {
         $selected = $userData[$selectionKey] ?? [];
         $allSelected = count($selected) === count($options) && empty(array_diff(array_keys($options), $selected));
-        
+
         $keyboard = [];
-        
+
         // Кнопка "Выбрать все"
         $selectAllStatus = $allSelected ? '🟢' : '🔴';
         $keyboard[] = [new InlineKeyboardButton([
             'text' => "{$selectAllStatus} Выбрать все",
             'callback_data' => "{$prefix}_all"
         ])];
-        
+
         // Кнопки для каждого элемента
         foreach ($options as $key => $text) {
             $status = in_array($key, $selected) ? '🟢' : '🔴';
@@ -39,13 +39,13 @@ class Helpers
                 'callback_data' => "{$prefix}_{$key}"
             ])];
         }
-        
+
         // Кнопка "Далее"
         $keyboard[] = [new InlineKeyboardButton([
             'text' => 'Далее',
             'callback_data' => "{$prefix}_next"
         ])];
-        
+
         return new InlineKeyboard(...$keyboard);
     }
 
@@ -76,7 +76,7 @@ class Helpers
         }
 
         $userData[$selectionKey] = array_values($selected);
-        
+
         return $userData;
     }
 
@@ -93,7 +93,7 @@ class Helpers
         bool $addSelectAll = false
     ): InlineKeyboard {
         $keyboard = [];
-        
+
         // Кнопка "Выбрать все"
         if ($addSelectAll && $userData !== null && $selectionKey !== null) {
             $selected = $userData[$selectionKey] ?? [];
@@ -109,11 +109,11 @@ class Helpers
         $totalPages = (int)ceil(count($items) / $pageSize);
         $startOffset = $page * $pageSize;
         $endOffset = $startOffset + $pageSize;
-        
+
         // Кнопки элементов
         $selectedOnPage = ($userData && $selectionKey) ? ($userData[$selectionKey] ?? []) : [];
         $pageItems = array_slice($items, $startOffset, $pageSize);
-        
+
         foreach ($pageItems as $item) {
             $itemId = (string)$item['id'];
             $status = in_array($itemId, $selectedOnPage) ? '🟢' : '🔴';
@@ -123,7 +123,7 @@ class Helpers
                 'callback_data' => "{$prefix}_{$itemId}"
             ])];
         }
-        
+
         // Кнопки навигации
         $navButtons = [];
         if ($page > 0) {
@@ -138,7 +138,7 @@ class Helpers
                 'callback_data' => "page_{$prefix}_nav_" . ($page + 1)
             ]);
         }
-        
+
         if (!empty($navButtons)) {
             $keyboard[] = $navButtons;
         }
@@ -150,7 +150,7 @@ class Helpers
                 'callback_data' => "{$prefix}_next"
             ])];
         }
-        
+
         return new InlineKeyboard(...$keyboard);
     }
 
@@ -225,7 +225,7 @@ class Helpers
         $responsesToday = rand(0, 15);
         $invites = rand(5, (int)($totalResponses / 4));
         $declines = rand($invites, $totalResponses - $invites);
-        
+
         return [
             'total_responses' => $totalResponses,
             'responses_today' => $responsesToday,

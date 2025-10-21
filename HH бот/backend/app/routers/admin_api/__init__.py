@@ -1,7 +1,8 @@
 from fastapi import APIRouter
+
+from .broadcasts import router as broadcasts_router
 from .metrics import router as metrics_router
 from .users import router as users_router
-from .broadcasts import router as broadcasts_router
 
 router = APIRouter()
 router.include_router(metrics_router)

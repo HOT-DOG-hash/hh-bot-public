@@ -2,6 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 from utils import texts
 
+
 def get_main_menu_keyboard() -> InlineKeyboardMarkup:
     """Creates and returns the main menu keyboard."""
     keyboard = [
@@ -15,11 +16,14 @@ def get_main_menu_keyboard() -> InlineKeyboardMarkup:
     ]
     return InlineKeyboardMarkup(keyboard)
 
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int = None) -> None:
+
+async def main_menu(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int = None
+) -> None:
     """Displays the main menu."""
     reply_markup = get_main_menu_keyboard()
     text = texts.MAIN_MENU_TITLE
-    
+
     if update and update.callback_query:
         await update.callback_query.answer()
         await update.callback_query.message.edit_text(text, reply_markup=reply_markup)
@@ -29,17 +33,19 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id:
         # This case is for calling from external sources
         await context.bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
 
+
 async def back_to_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     await main_menu(update, context)
     return ConversationHandler.END
 
+
 async def show_referral_program(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Displays the referral program information."""
     query = update.callback_query
     user_id = update.effective_user.id
-    
+
     bot_info = await context.bot.get_me()
     bot_username = bot_info.username
     referral_link = f"https://t.me/{bot_username}?start={user_id}"
@@ -59,7 +65,7 @@ async def show_referral_program(update: Update, context: ContextTypes.DEFAULT_TY
         level3_referrals,
         total_income,
         balance,
-        min_withdrawal
+        min_withdrawal,
     )
 
     keyboard = [[InlineKeyboardButton(texts.BACK_TO_MAIN_MENU, callback_data="main_menu")]]
@@ -71,10 +77,13 @@ async def show_referral_program(update: Update, context: ContextTypes.DEFAULT_TY
     else:
         await update.message.reply_text(text, reply_markup=reply_markup)
 
+
 async def show_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Shows subscription status and options (demo mode)."""
-    subscription_status = context.user_data.get("subscription_status", "active")  # По умолчанию активна в демо
-    
+    subscription_status = context.user_data.get(
+        "subscription_status", "active"
+    )  # По умолчанию активна в демо
+
     text = texts.SUBSCRIPTION_INFO
 
     if subscription_status == "active":
@@ -95,26 +104,28 @@ async def show_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     else:
         await update.message.reply_text(text, reply_markup=reply_markup)
 
+
 async def handle_payment_stub(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handles the stub for payment processing (demo mode)."""
     query = update.callback_query
     await query.answer()
-    
+
     context.user_data["subscription_status"] = "active"
-    
+
     text = texts.SUBSCRIPTION_SUCCESS
     keyboard = [[InlineKeyboardButton(texts.BACK_TO_MAIN_MENU, callback_data="main_menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     await query.message.edit_text(text, reply_markup=reply_markup)
+
 
 async def show_support(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Displays support information (demo mode)."""
     support_text = texts.SUPPORT_INFO
-    
+
     keyboard = [[InlineKeyboardButton(texts.BACK_TO_MAIN_MENU, callback_data="main_menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     if update.callback_query:
         await update.callback_query.answer()
         await update.callback_query.message.edit_text(support_text, reply_markup=reply_markup)

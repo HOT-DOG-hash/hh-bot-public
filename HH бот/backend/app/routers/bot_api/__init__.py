@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from .resume import router as resumes_router
 from .search import router as search_router
 from .stats import router as stats_router

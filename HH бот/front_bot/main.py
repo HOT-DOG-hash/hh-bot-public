@@ -1,7 +1,7 @@
-import os
-import sys
 import asyncio
 import logging
+import os
+import sys
 from logging.handlers import WatchedFileHandler
 from pathlib import Path
 
@@ -11,11 +11,12 @@ ORIG_ENV = dict(os.environ)
 from telegram import BotCommand, Update
 from telegram.ext import (
     Application,
-    CommandHandler,
     CallbackQueryHandler,
+    CommandHandler,
     ConversationHandler,
     PicklePersistence,
 )
+
 
 # ─── logging ──────────────────────────────────────────────────────────────────
 def setup_logging() -> None:
@@ -38,6 +39,7 @@ def setup_logging() -> None:
 
     logging.basicConfig(level=logging.INFO, format=fmt, handlers=handlers)
 
+
 # ─── token ────────────────────────────────────────────────────────────────────
 def _sanitize(s: str | None) -> str | None:
     if not s:
@@ -46,6 +48,7 @@ def _sanitize(s: str | None) -> str | None:
     if s.startswith("<") and s.endswith(">"):
         s = s[1:-1].strip()
     return s or None
+
 
 def read_token() -> str:
     """
@@ -69,12 +72,15 @@ def read_token() -> str:
             break
 
     if not token:
-        logging.error("TELEGRAM_BOT_TOKEN не задан или некорректный. Задай TELEGRAM_BOT_TOKEN (или BOT_TOKEN) в .env")
+        logging.error(
+            "TELEGRAM_BOT_TOKEN не задан или некорректный. Задай TELEGRAM_BOT_TOKEN (или BOT_TOKEN) в .env"
+        )
         sys.exit(1)
 
     masked = f"{token[:4]}...{token[-4:]}" if len(token) > 8 else "***"
     logging.info("Telegram token загружен из %s (%s)", picked, masked)
     return token
+
 
 # ─── main ─────────────────────────────────────────────────────────────────────
 async def main() -> None:
@@ -87,7 +93,7 @@ async def main() -> None:
     os.environ["BOT_TOKEN"] = token
 
     # Теперь безопасно подключаем роутеры (могут иметь сайд-эффекты)
-    from routers import menu, start, letters, responses, auto_responses, stats
+    from routers import auto_responses, letters, menu, responses, start, stats
 
     persistence = PicklePersistence(filepath="demo_bot_persistence")
     app = Application.builder().token(token).persistence(persistence).build()
@@ -129,6 +135,7 @@ async def main() -> None:
         await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
 
         await asyncio.Event().wait()
+
 
 if __name__ == "__main__":
     try:

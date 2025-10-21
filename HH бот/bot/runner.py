@@ -2,13 +2,11 @@ import asyncio
 import logging
 import os
 import signal
-from typing import Optional
-
-from redis.asyncio import Redis
-from sqlalchemy import text
 
 from backend.app.core.db import get_engine
 from backend.app.main import app, start_bot, stop_bot
+from redis.asyncio import Redis
+from sqlalchemy import text
 
 try:  # pragma: no cover - optional optimisation
     import uvloop  # type: ignore
@@ -25,7 +23,7 @@ async def _check_dependencies() -> None:
 
     redis_url = os.getenv("REDIS_URL")
     if redis_url:
-        client: Optional[Redis] = None
+        client: Redis | None = None
         try:
             client = Redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
             await client.ping()
@@ -44,7 +42,9 @@ async def _wait_for_dependencies(max_attempts: int = 8) -> None:
             return
         except Exception as exc:
             attempt += 1
-            logging.warning("Dependencies not ready (attempt %s/%s): %s", attempt, max_attempts, exc)
+            logging.warning(
+                "Dependencies not ready (attempt %s/%s): %s", attempt, max_attempts, exc
+            )
             if attempt >= max_attempts:
                 logging.error("Giving up waiting for dependencies.")
                 raise

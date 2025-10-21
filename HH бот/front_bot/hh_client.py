@@ -2,6 +2,7 @@ import httpx
 
 BASE = "https://api.hh.ru"
 
+
 class HHClient:
     def __init__(self, timeout=10):
         limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)

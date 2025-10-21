@@ -1,0 +1,13 @@
+ruff
+black
+mypy
+pytest
+pytest-asyncio
+alembic
+types-requests
+respx
+click
+typing_extensions
+pluggy
+pre-commit
+psycopg[binary]

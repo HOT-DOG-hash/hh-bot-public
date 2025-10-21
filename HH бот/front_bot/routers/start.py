@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler
 
 log = logging.getLogger(__name__)
@@ -21,11 +20,12 @@ MAIN_MENU_KB = InlineKeyboardMarkup(
     ]
 )
 
+
 # --- универсальная отправка
 async def _send(
     update: Update,
     text: str,
-    reply_markup: Optional[InlineKeyboardMarkup] = None,
+    reply_markup: InlineKeyboardMarkup | None = None,
     *,
     prefer_edit: bool = True,
 ):
@@ -47,7 +47,9 @@ async def _send(
         return await update.effective_message.reply_text(text, reply_markup=reply_markup)
 
     if update.effective_chat:
-        return await update.get_bot().send_message(update.effective_chat.id, text, reply_markup=reply_markup)
+        return await update.get_bot().send_message(
+            update.effective_chat.id, text, reply_markup=reply_markup
+        )
 
 
 # --- общий показ главного меню
@@ -61,6 +63,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # --- публичные хендлеры (ожидаются другими модулями)
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик /start — просто показывает главное меню."""

@@ -35,12 +35,12 @@ function initializeUserProfile() {
     // Get user ID from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
-    
+
     if (userId) {
         // In a real application, you would fetch user data from the server
         console.log('Loading user profile for ID:', userId);
     }
-    
+
     // Set up tab switching
     setupTabSwitching();
 }
@@ -57,14 +57,14 @@ function setupEventListeners() {
             }
         });
     });
-    
+
     // Toggle switches
     document.querySelectorAll('.toggle-switch input').forEach(toggle => {
         toggle.addEventListener('change', function() {
             handleToggleChange(this);
         });
     });
-    
+
     // Filter inputs
     setupFilterListeners();
 }
@@ -72,19 +72,19 @@ function setupEventListeners() {
 function setupTabSwitching() {
     const tabs = document.querySelectorAll('.profile-tab');
     const panels = document.querySelectorAll('.tab-panel');
-    
+
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const targetTab = this.dataset.tab;
-            
+
             // Remove active class from all tabs and panels
             tabs.forEach(t => t.classList.remove('active'));
             panels.forEach(p => p.classList.remove('active'));
-            
+
             // Add active class to clicked tab and corresponding panel
             this.classList.add('active');
             document.getElementById(targetTab).classList.add('active');
-            
+
             // Load tab-specific data
             loadTabData(targetTab);
         });
@@ -99,7 +99,7 @@ function loadUserData() {
     document.getElementById('userTotalResponses').textContent = currentUser.totalResponses;
     document.getElementById('userBalance').textContent = `${currentUser.balance.toLocaleString()} ₽`;
     document.getElementById('userReferrals').textContent = currentUser.referrals.length;
-    
+
     // Load detailed information
     document.getElementById('telegramId').textContent = currentUser.telegramId;
     document.getElementById('userName').textContent = currentUser.name;
@@ -109,12 +109,12 @@ function loadUserData() {
     document.getElementById('subscriptionEnd').textContent = formatDate(currentUser.subscriptionEnd);
     document.getElementById('userBalanceDetail').textContent = `${currentUser.balance.toLocaleString()} ₽`;
     document.getElementById('adminComment').value = currentUser.comment;
-    
+
     // Load UTM data
     document.getElementById('utmSource').textContent = currentUser.utmSource || '—';
     document.getElementById('utmMedium').textContent = currentUser.utmMedium || '—';
     document.getElementById('utmCampaign').textContent = currentUser.utmCampaign || '—';
-    
+
     // Update status badge
     updateStatusBadge(currentUser.status);
 }
@@ -161,7 +161,7 @@ function loadOperationsData() {
             status: 'completed'
         }
     ];
-    
+
     const tbody = document.getElementById('operationsTableBody');
     if (tbody) {
         tbody.innerHTML = operations.map(op => `
@@ -214,7 +214,7 @@ function loadResponsesData() {
             status: 'invited'
         }
     ];
-    
+
     const tbody = document.getElementById('responsesTableBody');
     if (tbody) {
         tbody.innerHTML = responses.map(resp => `
@@ -243,7 +243,7 @@ function setupFilterListeners() {
             element.addEventListener('change', applyOperationFilters);
         }
     });
-    
+
     // Response filters
     const responseFilters = ['responseStatus', 'responseType', 'responseDateFrom', 'responseDateTo'];
     responseFilters.forEach(filterId => {
@@ -274,10 +274,10 @@ function updateStatusBadge(status) {
         'inactive': { class: 'status-inactive', text: 'Неактивен' },
         'banned': { class: 'status-banned', text: 'Заблокирован' }
     };
-    
+
     const statusInfo = statusMap[status] || statusMap['inactive'];
     statusElement.innerHTML = `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
-    
+
     // Update toggle button text
     const toggleText = document.getElementById('statusToggleText');
     if (toggleText) {
@@ -363,7 +363,7 @@ function applyOperationFilters() {
     const type = document.getElementById('operationType').value;
     const dateFrom = document.getElementById('operationDateFrom').value;
     const dateTo = document.getElementById('operationDateTo').value;
-    
+
     showToast('Фильтры операций применены', 'info');
     // In a real application, you would filter the operations table
 }
@@ -373,7 +373,7 @@ function applyResponseFilters() {
     const type = document.getElementById('responseType').value;
     const dateFrom = document.getElementById('responseDateFrom').value;
     const dateTo = document.getElementById('responseDateTo').value;
-    
+
     showToast('Фильтры откликов применены', 'info');
     // In a real application, you would filter the responses table
 }
@@ -423,7 +423,7 @@ function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
     toast.className = `toast ${type} show`;
-    
+
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);

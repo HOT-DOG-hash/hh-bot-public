@@ -1,25 +1,37 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+import httpx
 from aiogram import Router
-from aiogram.types import Message
 from aiogram.filters import Command
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from ...backend.app.database import SessionLocal
+from aiogram.types import Message
+from sqlalchemy import select
+
+from ...backend.app.core.db import get_session_factory
 from ...backend.app.models import SearchQuery, User
 from ..hh_client import HHClient
-import httpx
 
 router = Router()
 
-async def save_activity(chat_id: int, query: str | None = None):
-    async with SessionLocal() as db:
-        stmt = pg_insert(User).values(chat_id=chat_id)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[User.chat_id],
-            set_={"last_activity": None}
-        )
-        await db.execute(stmt)
+
+async def save_activity(chat_id: int, query: str | None = None) -> None:
+    session_factory = get_session_factory()
+    async with session_factory() as db:
+        stmt = select(User).where(User.tg_id == str(chat_id)).limit(1)
+        result = await db.execute(stmt)
+        user = result.scalar_one_or_none()
+        now = datetime.now(timezone.utc)
+        if user:
+            user.last_activity = now
+        else:
+            user = User(tg_id=str(chat_id), is_active=True, last_activity=now)
+            db.add(user)
+            await db.flush()
         if query:
-            await db.execute(pg_insert(SearchQuery).values(chat_id=chat_id, query=query))
+            db.add(SearchQuery(user_id=user.id, query=query, chat_id=chat_id))
         await db.commit()
+
 
 @router.message(Command("search"))
 async def cmd_search(message: Message):
@@ -55,6 +67,7 @@ async def cmd_search(message: Message):
         lines.append(f"• {name} — {emp}\n  {salary_str}\n  {url}")
 
     await message.answer("\n\n".join(lines))
+
 
 @router.message(Command("vacancy"))
 async def cmd_vacancy(message: Message):

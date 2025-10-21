@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Literal
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
@@ -17,7 +17,7 @@ router = APIRouter(tags=["health"], prefix="/api")
 
 class HealthResponse(BaseModel):
     status: Literal["ok", "degraded"]
-    checks: Dict[str, str]
+    checks: dict[str, str]
     version: str | None = None
 
 
@@ -28,7 +28,9 @@ async def _check_db() -> str:
             await connection.execute(text("SELECT 1"))
         return "ok"
     except Exception as exc:  # pragma: no cover - defensive reporting
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"db:{exc.__class__.__name__}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"db:{exc.__class__.__name__}"
+        )
 
 
 async def _check_redis() -> str:
@@ -40,24 +42,29 @@ async def _check_redis() -> str:
         client = Redis.from_url(url, encoding="utf-8", decode_responses=True)
         pong = await client.ping()
         if not pong:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="redis:ping_failed")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="redis:ping_failed"
+            )
         return "ok"
     except HTTPException:
         raise
     except Exception as exc:  # pragma: no cover - defensive reporting
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"redis:{exc.__class__.__name__}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"redis:{exc.__class__.__name__}",
+        )
     finally:
         if client is not None:
             await client.aclose()
 
 
-def _overall_status(checks: Dict[str, str]) -> Literal["ok", "degraded"]:
+def _overall_status(checks: dict[str, str]) -> Literal["ok", "degraded"]:
     return "ok" if all(value in ("ok", "skip") for value in checks.values()) else "degraded"
 
 
 @router.get("/health")
 async def health(strict: bool = Query(False, description="HTTP 503 если есть 'fail'")):
-    checks: Dict[str, str] = {}
+    checks: dict[str, str] = {}
     status_code = status.HTTP_200_OK
 
     try:

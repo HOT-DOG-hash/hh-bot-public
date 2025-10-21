@@ -1,0 +1,18 @@
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+fix = true
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501", "E402"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+ignore_errors = true
+warn_unused_ignores = true
+warn_redundant_casts = true

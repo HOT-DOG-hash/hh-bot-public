@@ -762,23 +762,23 @@ body {
         transform: translateX(-100%);
         transition: transform 0.3s ease;
     }
-    
+
     .sidebar.open {
         transform: translateX(0);
     }
-    
+
     .main-content {
         margin-left: 0;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .top-header {
         padding: 1rem;
     }
-    
+
     .content-area {
         padding: 1rem;
     }
@@ -903,11 +903,11 @@ body {
     .charts-section {
         grid-template-columns: 1fr;
     }
-    
+
     .top-lists {
         grid-template-columns: 1fr;
     }
-    
+
     .bot-status-section {
         grid-template-columns: 1fr;
     }
@@ -917,16 +917,16 @@ body {
     .key-metrics {
         grid-template-columns: 1fr;
     }
-    
+
     .revenue-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .funnel-steps {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .funnel-step:not(:last-child)::after {
         content: '↓';
         right: auto;
@@ -941,15 +941,15 @@ body {
     .revenue-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .period-selector {
         flex-wrap: wrap;
     }
-    
+
     .metric-card {
         padding: 1rem;
     }
-    
+
     .metric-value {
         font-size: 1.5rem;
     }
@@ -1642,11 +1642,11 @@ body {
     .user-detail-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .users-search input {
         width: 200px;
     }
-    
+
     .users-actions {
         flex-direction: column;
         align-items: stretch;
@@ -1659,20 +1659,20 @@ body {
         align-items: stretch;
         gap: 1rem;
     }
-    
+
     .users-table-container {
         overflow-x: auto;
     }
-    
+
     .users-table {
         min-width: 800px;
     }
-    
+
     .user-modal-content {
         width: 95vw;
         max-height: 95vh;
     }
-    
+
     .user-actions-grid {
         grid-template-columns: 1fr;
     }
@@ -3054,15 +3054,15 @@ input:checked + .toggle-slider:before {
         align-items: stretch;
         gap: 1.5rem;
     }
-    
+
     .user-profile-actions {
         justify-content: flex-start;
     }
-    
+
     .tab-panel-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .analytics-grid {
         grid-template-columns: 1fr;
     }
@@ -3073,32 +3073,32 @@ input:checked + .toggle-slider:before {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .user-profile-stats {
         gap: 1rem;
     }
-    
+
     .profile-tabs {
         overflow-x: auto;
     }
-    
+
     .operations-header,
     .responses-header {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .operations-filters,
     .responses-filters {
         justify-content: flex-start;
     }
-    
+
     .operations-stats,
     .referral-stats,
     .responses-stats {
         grid-template-columns: 1fr;
     }
-    
+
     .operations-actions {
         justify-content: flex-start;
     }
@@ -3543,17 +3543,17 @@ input:checked + .toggle-slider:before {
     .modern-pricing-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .modern-pricing-items {
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     }
-    
+
     .pricing-header-content {
         flex-direction: column;
         align-items: stretch;
         gap: 1.5rem;
     }
-    
+
     .pricing-header-actions {
         justify-content: flex-start;
     }
@@ -3563,38 +3563,38 @@ input:checked + .toggle-slider:before {
     .modern-pricing-header {
         padding: 1.5rem;
     }
-    
+
     .modern-pricing-title {
         font-size: 2rem;
     }
-    
+
     .modern-pricing-subtitle {
         font-size: 1rem;
     }
-    
+
     .pricing-card-content {
         padding: 0 1.5rem 1.5rem;
     }
-    
+
     .pricing-card-header {
         padding: 1.5rem 1.5rem 1rem;
     }
-    
+
     .modern-pricing-items {
         grid-template-columns: 1fr;
     }
-    
+
     .pricing-actions-content {
         flex-direction: column;
         align-items: stretch;
         gap: 1.5rem;
     }
-    
+
     .pricing-actions-buttons {
         justify-content: stretch;
         flex-direction: column;
     }
-    
+
     .modern-btn {
         justify-content: center;
     }
@@ -3604,26 +3604,26 @@ input:checked + .toggle-slider:before {
     .modern-pricing-section {
         padding: 0 1rem;
     }
-    
+
     .modern-pricing-title {
         font-size: 1.75rem;
     }
-    
+
     .pricing-card-icon {
         top: -15px;
         right: 1rem;
     }
-    
+
     .icon-wrapper {
         width: 50px;
         height: 50px;
         font-size: 1.25rem;
     }
-    
+
     .modern-pricing-items {
         gap: 1rem;
     }
-    
+
     .modern-pricing-item {
         padding: 1rem;
     }
@@ -3691,29 +3691,29 @@ input:checked + .toggle-slider:before {
     .user-profile-header {
         padding: 1.5rem;
     }
-    
+
     .user-profile-name {
         font-size: 1.5rem;
     }
-    
+
     .user-profile-meta {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.25rem;
     }
-    
+
     .user-profile-actions {
         flex-direction: column;
     }
-    
+
     .profile-stat-value {
         font-size: 1.25rem;
     }
-    
+
     .info-card-content {
         padding: 0 1rem 1rem;
     }
-    
+
     .referral-children {
         margin-left: 1rem;
         padding-left: 0.5rem;
@@ -4652,15 +4652,15 @@ input:checked + .toggle-slider:before {
         align-items: stretch;
         gap: 1rem;
     }
-    
+
     .broadcast-stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
-    
+
     .audience-options {
         grid-template-columns: 1fr;
     }
-    
+
     .broadcast-info-grid {
         grid-template-columns: 1fr;
     }
@@ -4670,27 +4670,27 @@ input:checked + .toggle-slider:before {
     .broadcasts-table-container {
         overflow-x: auto;
     }
-    
+
     .broadcasts-table {
         min-width: 800px;
     }
-    
+
     .broadcast-modal-content {
         padding: 1rem;
     }
-    
+
     .broadcast-view-modal-content {
         padding: 1rem;
     }
-    
+
     .broadcast-stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .delivery-stats-detailed {
         grid-template-columns: 1fr;
     }
-    
+
     .broadcast-modal-actions,
     .broadcast-view-actions {
         justify-content: stretch;
@@ -4702,20 +4702,20 @@ input:checked + .toggle-slider:before {
     .broadcast-stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .broadcasts-filters {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .filter-group {
         justify-content: flex-start;
     }
-    
+
     .editor-toolbar {
         gap: 0.125rem;
     }
-    
+
     .toolbar-btn {
         width: 28px;
         height: 28px;

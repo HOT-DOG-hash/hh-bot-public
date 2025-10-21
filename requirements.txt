@@ -12,14 +12,9 @@ asyncpg==0.29.0
 alembic==1.13.2
 pydantic==2.7.4
 python-dotenv==1.0.1
+structlog==23.2.0
 
 # Telegram (если используешь PTB; aiogram можно оставить, но он не обязателен)
 python-telegram-bot==20.8
-
-# tests & lint
-pytest==8.3.2
-pytest-asyncio==0.23.8
-respx==0.21.1
-flake8==7.1.1
 pydantic-settings>=2.2,<3
-
+aiosqlite==0.20.0

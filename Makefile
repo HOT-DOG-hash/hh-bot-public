@@ -174,3 +174,38 @@ prune:
 .PHONY: ensure_nginx_dir
 ensure_nginx_dir:
 	@mkdir -p nginx
+
+## ---------- Dev контейнер ----------
+.PHONY: dev-up
+dev-up:
+	docker compose -f docker-compose.dev.yml up -d db redis
+	docker compose -f docker-compose.dev.yml up --build app
+
+.PHONY: dev-down
+dev-down:
+	docker compose -f docker-compose.dev.yml down -v
+
+.PHONY: dev-lint
+dev-lint:
+	docker compose -f docker-compose.dev.yml run --rm app uvx ruff check .
+
+.PHONY: dev-type
+dev-type:
+	docker compose -f docker-compose.dev.yml run --rm app uvx mypy .
+
+.PHONY: dev-test
+dev-test:
+	docker compose -f docker-compose.dev.yml run --rm app uvx pytest -q
+
+.PHONY: dev-fmt
+dev-fmt:
+	docker compose -f docker-compose.dev.yml run --rm app uvx black .
+
+
+.PHONY: alembic-up
+alembic-up:
+	alembic upgrade head
+
+.PHONY: alembic-down
+alembic-down:
+	alembic downgrade -1

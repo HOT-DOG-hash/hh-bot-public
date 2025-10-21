@@ -43,7 +43,7 @@ class ProcessHandler extends AbstractProcessingHandler
      */
     private array $pipes = [];
 
-    private float $timeout;    
+    private float $timeout;
 
     /**
      * @var array<int, string[]>

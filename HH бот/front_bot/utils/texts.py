@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # --- General ---
 CANCEL_ACTION = "Действие отменено. Начинаем заново."
 IN_DEVELOPMENT = "Раздел в разработке."
@@ -36,6 +34,7 @@ SUPPORT_INFO = (
     "Мы на связи каждый день с 10:00 до 20:00 (МСК)"
 )
 
+
 # --- Referral ---
 def get_referral_text(link, l1, l2, l3, income, balance, min_withdrawal):
     return (
@@ -55,6 +54,7 @@ def get_referral_text(link, l1, l2, l3, income, balance, min_withdrawal):
         f"Минимальная сумма для вывода - {min_withdrawal}р"
     )
 
+
 # --- Cover Letters ---
 CL_MENU_HEADER = (
     "📄 Сопроводительные письма\n\n"
@@ -67,8 +67,10 @@ CL_ASK_TITLE = "Шаг 1/2: Отправьте название сопровод
 CL_ASK_BODY = "Шаг 2/2: Отправьте текст сопроводительного письма:\n_Будет видно работодателям._"
 CL_SAVED = "✅ Письмо сохранено!"
 
+
 def get_cl_view_text(body):
     return f"📝 Текст сопроводительного письма:\n\n{body}"
+
 
 CL_DELETED = "Письмо удалено."
 
@@ -79,14 +81,14 @@ ASK_COUNTRY = "📍 Шаг 2/10:\nВыберите страну поиска"
 ASK_REGION = "📍 Шаг 3/10:\nВыберите регион"
 ASK_SCHEDULE = (
     "📍 Шаг 4/10:\n"
-    "Выберите график работы и нажмите \"Далее\".\n\n"
+    'Выберите график работы и нажмите "Далее".\n\n'
     "Можете отметить несколько:\n"
     "🔴 - не выбрано\n"
     "🟢 - выбрано"
 )
 ASK_EMPLOYMENT = (
     "📍 Шаг 5/10:\n"
-    "Выберите тип занятости и нажмите \"Далее\".\n\n"
+    'Выберите тип занятости и нажмите "Далее".\n\n'
     "Можете отметить несколько:\n"
     "🔴 - не выбрано\n"
     "🟢 - выбрано"
@@ -110,15 +112,17 @@ ASK_KEYWORD = (
     "— Везде"
 )
 
+
 def get_search_field_text(keyword):
     return (
         f"📍 Шаг 8/10:\n"
-        f"Ваш поиск выполнен по запросу \"{keyword}\".\n\n"
-        f"Выберите где искать совпадения и нажмите \"Далее\":\n\n"
+        f'Ваш поиск выполнен по запросу "{keyword}".\n\n'
+        f'Выберите где искать совпадения и нажмите "Далее":\n\n'
         f"Можете отметить несколько:\n"
         f"🔴 - не выбрано\n"
         f"🟢 - выбрано"
     )
+
 
 ASK_COVER_LETTER = (
     "📍 Шаг 9/10:\n"
@@ -126,7 +130,21 @@ ASK_COVER_LETTER = (
     "Или выберите из ранее созданных шаблонов:"
 )
 
-def get_confirmation_text(vacancy_count, hh_ru_link, country_name, region_name, schedule, employment, profession, keyword, search_field, cover_letter, daily_count=0, remaining_count=200):
+
+def get_confirmation_text(
+    vacancy_count,
+    hh_ru_link,
+    country_name,
+    region_name,
+    schedule,
+    employment,
+    profession,
+    keyword,
+    search_field,
+    cover_letter,
+    daily_count=0,
+    remaining_count=200,
+):
     cover_letter_status = "Да" if cover_letter != "Без сопроводительного письма" else "Нет"
     return (
         f"📍 Шаг 10/10: Настройка завершена!\n"
@@ -144,6 +162,7 @@ def get_confirmation_text(vacancy_count, hh_ru_link, country_name, region_name, 
         f"Нажмите кнопку ниже, чтобы отправить отклики.\n"
         f"Количество доступных откликов для отправки сегодня — {remaining_count}"
     )
+
 
 RESPONSES_STARTED = (
     "🚀 Процесс запущен\n\n"
@@ -166,14 +185,16 @@ AUTO_RESPONSE_MAIN = (
 )
 
 # Шаги настройки автооткликов
-AUTO_RESPONSE_ASK_RESUME = "📍 Шаг 1/10:\nВыберите резюме, с которого будут отправляться автоотклики:"
-
-AUTO_RESPONSE_ASK_SEARCH_METHOD = (
-    "📍 Шаг 2/10:\n"
-    "Выберите способ поиска вакансий:"
+AUTO_RESPONSE_ASK_RESUME = (
+    "📍 Шаг 1/10:\nВыберите резюме, с которого будут отправляться автоотклики:"
 )
 
-AUTO_RESPONSE_ASK_HH_URL = "Вставьте ссылку с сформированным списком вакансий по вашим фильтрам из hh.ru"
+AUTO_RESPONSE_ASK_SEARCH_METHOD = "📍 Шаг 2/10:\n" "Выберите способ поиска вакансий:"
+
+AUTO_RESPONSE_ASK_HH_URL = (
+    "Вставьте ссылку с сформированным списком вакансий по вашим фильтрам из hh.ru"
+)
+
 
 # Статус автооткликов (активные)
 def get_auto_response_active_status(start_date, start_time, today_count, total_count, filters_info):
@@ -187,6 +208,7 @@ def get_auto_response_active_status(start_date, start_time, today_count, total_c
         f"Настройки фильтров:\n{filters_info}"
     )
 
+
 # Статус автооткликов (неактивные)
 AUTO_RESPONSE_INACTIVE_STATUS = (
     "Статус:\n"
@@ -194,8 +216,11 @@ AUTO_RESPONSE_INACTIVE_STATUS = (
     "Нажмите кнопку ниже, чтобы настроить и запустить автоотклики."
 )
 
+
 # Подтверждение настроек автооткликов
-def get_auto_response_confirmation(resume_title, search_method, filters_summary, cover_letter_status):
+def get_auto_response_confirmation(
+    resume_title, search_method, filters_summary, cover_letter_status
+):
     return (
         f"📍 Шаг 10/10: Настройка завершена!\n\n"
         f"Резюме: {resume_title}\n"
@@ -204,6 +229,7 @@ def get_auto_response_confirmation(resume_title, search_method, filters_summary,
         f"Сопроводительное письмо: {cover_letter_status}\n\n"
         f"Нажмите кнопку ниже, чтобы запустить автоотклики."
     )
+
 
 # Сообщения о запуске/остановке
 AUTO_RESPONSE_STARTED = (
@@ -225,12 +251,13 @@ STATS_SELECT_RESUME = "Выберите резюме для отображени
 
 STATS_NO_RESUMES = "У вас пока нет добавленных резюме для сбора статистики."
 
+
 def get_stats_text(resume_name, total_responses, responses_today, invites, declines):
     """Формирует текст статистики для резюме."""
     conversion = round((invites / total_responses * 100) if total_responses > 0 else 0, 1)
-    
+
     return (
-        f"📊 Статистика для резюме \"{resume_name}\":\n"
+        f'📊 Статистика для резюме "{resume_name}":\n'
         f"• Всего откликов через бота: {total_responses}\n"
         f"• Сегодня: {responses_today}\n"
         f"• Приглашений: {invites}\n"

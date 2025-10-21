@@ -1,4 +1,4 @@
-<# 
+<#
   Полная остановка + удаление volume'ов и orphans (осторожно: сотрёт БД в volume).
   Запуск: powershell -ExecutionPolicy Bypass -File .\scripts\reset.ps1
 #>

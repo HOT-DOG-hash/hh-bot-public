@@ -8,7 +8,9 @@ export PYTHONUNBUFFERED=1
 #   Это запасной вариант — обычно переменные уже приходят из compose env_file.
 if [[ -f "/app/.env" ]]; then
   sed -i 's/\r$//' /app/.env
-  set -a; source /app/.env; set +a
+  if [[ "${BOT_SKIP_ENV_SOURCE:-0}" != "1" ]]; then
+    set -a; source /app/.env; set +a
+  fi
 fi
 
 # 3) PYTHONPATH по умолчанию — учитываем пробелы/кириллицу в пути

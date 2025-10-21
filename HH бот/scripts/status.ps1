@@ -1,4 +1,4 @@
-<# 
+<#
   Состояние контейнеров + краткие логи web.
   Запуск: powershell -ExecutionPolicy Bypass -File .\scripts\status.ps1
 #>

@@ -1,0 +1,106 @@
+2025-08-17 23:35:24,248 - INFO - BEGIN (implicit)
+2025-08-17 23:35:24,252 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:35:24,253 - INFO - [generated in 0.00079s] (50, 0)
+2025-08-17 23:35:24,255 - INFO - ROLLBACK
+2025-08-17 23:36:16,307 - INFO - BEGIN (implicit)
+2025-08-17 23:36:16,312 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:36:16,313 - INFO - [generated in 0.00063s] (50, 0)
+2025-08-17 23:36:16,315 - INFO - ROLLBACK
+2025-08-17 23:40:02,216 - INFO - BEGIN (implicit)
+2025-08-17 23:40:02,221 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:40:02,222 - INFO - [generated in 0.00079s] (50, 0)
+2025-08-17 23:40:02,224 - INFO - ROLLBACK
+2025-08-17 23:40:11,851 - INFO - HTTP Request: GET http://test/healthz "HTTP/1.1 200 OK"
+2025-08-17 23:40:11,859 - INFO - BEGIN (implicit)
+2025-08-17 23:40:11,863 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-17 23:40:11,863 - INFO - [generated in 0.00037s] (50, 0)
+2025-08-17 23:40:11,865 - INFO - ROLLBACK
+2025-08-17 23:40:11,866 - INFO - HTTP Request: GET http://test/api/bot/resumes "HTTP/1.1 200 OK"
+2025-08-18 19:22:13,041 - INFO - BEGIN (implicit)
+2025-08-18 19:22:13,047 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:22:13,048 - INFO - [generated in 0.00087s] (50, 0)
+2025-08-18 19:22:13,054 - INFO - ROLLBACK
+2025-08-18 19:22:16,022 - INFO - BEGIN (implicit)
+2025-08-18 19:22:16,023 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:22:16,026 - INFO - [cached since 2.979s ago] (50, 0)
+2025-08-18 19:22:16,030 - INFO - ROLLBACK
+2025-08-18 19:22:16,664 - INFO - BEGIN (implicit)
+2025-08-18 19:22:16,665 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:22:16,668 - INFO - [cached since 3.621s ago] (50, 0)
+2025-08-18 19:22:16,670 - INFO - ROLLBACK
+2025-08-18 19:31:02,276 - INFO - BEGIN (implicit)
+2025-08-18 19:31:02,278 - INFO - SELECT resume.id, resume.user_id, resume.hh_id, resume.title, resume.created_at
+FROM resume
+ LIMIT ? OFFSET ?
+2025-08-18 19:31:02,280 - INFO - [cached since 529.2s ago] (50, 0)
+2025-08-18 19:31:02,283 - INFO - ROLLBACK
+2025-10-20 16:14:18,346 - ERROR - Admin credentials are not set (ADMIN_USER/ADMIN_PASS).
+2025-10-20 16:14:18,349 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:14:18,356 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:14:18,363 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 200 OK"
+2025-10-20 16:19:00,650 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 16:19:00,655 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 16:19:00,668 - INFO - HTTP Request: GET http://testserver/billing/status/pay-ext-1 "HTTP/1.1 200 OK"
+2025-10-20 16:19:00,672 - INFO - HTTP Request: GET http://testserver/billing/subscription "HTTP/1.1 200 OK"
+2025-10-20 16:19:00,697 - INFO - HTTP Request: GET http://testserver/healthz "HTTP/1.1 200 OK"
+2025-10-20 16:19:00,931 - INFO - HTTP Request: GET http://testserver/oauth/hh/login?chat_id=555 "HTTP/1.1 302 Found"
+2025-10-20 16:19:00,964 - INFO - HTTP Request: GET http://testserver/jobs/search?q=python "HTTP/1.1 402 Payment Required"
+2025-10-20 16:19:01,181 - INFO - HTTP Request: GET http://testserver/api/bot/resumes "HTTP/1.1 404 Not Found"
+2025-10-20 16:19:01,198 - ERROR - Admin credentials are not set (ADMIN_USER/ADMIN_PASS).
+2025-10-20 16:19:01,200 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:19:01,206 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:19:01,214 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 200 OK"
+2025-10-20 16:22:17,938 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 16:22:17,942 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 16:22:17,955 - INFO - HTTP Request: GET http://testserver/billing/status/pay-ext-1 "HTTP/1.1 200 OK"
+2025-10-20 16:22:17,959 - INFO - HTTP Request: GET http://testserver/billing/subscription "HTTP/1.1 200 OK"
+2025-10-20 16:22:17,986 - INFO - HTTP Request: GET http://testserver/healthz "HTTP/1.1 200 OK"
+2025-10-20 16:22:18,021 - INFO - HTTP Request: GET http://testserver/oauth/hh/login?chat_id=555 "HTTP/1.1 302 Found"
+2025-10-20 16:22:18,060 - INFO - HTTP Request: GET http://testserver/jobs/search?q=python "HTTP/1.1 402 Payment Required"
+2025-10-20 16:22:18,586 - INFO - HTTP Request: GET https://api.hh.ru/vacancies?text=python&page=0&per_page=20 "HTTP/1.1 403 Forbidden"
+2025-10-20 16:22:18,588 - INFO - HTTP Request: GET http://testserver/jobs/search?q=python "HTTP/1.1 502 Bad Gateway"
+2025-10-20 16:22:18,820 - INFO - HTTP Request: GET http://testserver/api/bot/resumes "HTTP/1.1 200 OK"
+2025-10-20 16:22:18,827 - ERROR - Admin credentials are not set (ADMIN_USER/ADMIN_PASS).
+2025-10-20 16:22:18,828 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:22:18,836 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:22:18,841 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 200 OK"
+2025-10-20 16:23:09,662 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 16:23:09,665 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 16:23:09,679 - INFO - HTTP Request: GET http://testserver/billing/status/pay-ext-1 "HTTP/1.1 200 OK"
+2025-10-20 16:23:09,683 - INFO - HTTP Request: GET http://testserver/billing/subscription "HTTP/1.1 200 OK"
+2025-10-20 16:23:09,709 - INFO - HTTP Request: GET http://testserver/healthz "HTTP/1.1 200 OK"
+2025-10-20 16:23:09,736 - INFO - HTTP Request: GET http://testserver/oauth/hh/login?chat_id=555 "HTTP/1.1 302 Found"
+2025-10-20 16:23:09,765 - INFO - HTTP Request: GET http://testserver/jobs/search?q=python "HTTP/1.1 402 Payment Required"
+2025-10-20 16:23:09,796 - INFO - HTTP Request: GET http://testserver/jobs/search?q=python "HTTP/1.1 200 OK"
+2025-10-20 16:23:09,822 - INFO - HTTP Request: GET http://testserver/api/bot/resumes "HTTP/1.1 200 OK"
+2025-10-20 16:23:09,837 - ERROR - Admin credentials are not set (ADMIN_USER/ADMIN_PASS).
+2025-10-20 16:23:09,839 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:23:09,845 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 16:23:09,852 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 200 OK"
+2025-10-20 17:35:44,018 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 17:35:44,023 - INFO - HTTP Request: POST http://testserver/billing/create?plan=premium-month "HTTP/1.1 201 Created"
+2025-10-20 17:35:44,036 - INFO - HTTP Request: GET http://testserver/billing/status/pay-ext-1 "HTTP/1.1 200 OK"
+2025-10-20 17:35:44,041 - INFO - HTTP Request: GET http://testserver/billing/subscription "HTTP/1.1 200 OK"
+2025-10-20 17:35:44,063 - INFO - HTTP Request: GET http://testserver/healthz "HTTP/1.1 200 OK"
+2025-10-20 17:35:44,092 - INFO - HTTP Request: GET http://testserver/oauth/hh/login?chat_id=555 "HTTP/1.1 302 Found"
+2025-10-20 17:35:44,127 - INFO - HTTP Request: GET http://testserver/jobs/search?q=python "HTTP/1.1 402 Payment Required"
+2025-10-20 17:35:44,184 - INFO - HTTP Request: GET http://testserver/jobs/search?q=python "HTTP/1.1 200 OK"
+2025-10-20 17:35:44,219 - INFO - HTTP Request: GET http://testserver/api/bot/resumes "HTTP/1.1 200 OK"
+2025-10-20 17:35:44,236 - ERROR - Admin credentials are not set (ADMIN_USER/ADMIN_PASS).
+2025-10-20 17:35:44,237 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 17:35:44,244 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 401 Unauthorized"
+2025-10-20 17:35:44,249 - INFO - HTTP Request: GET http://testserver/admin/ping "HTTP/1.1 200 OK"

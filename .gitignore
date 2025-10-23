@@ -1,5 +1,6 @@
 # --- Python venv / cache / builds
 .venv/
+.uv/
 venv/
 __pycache__/
 *.pyc
@@ -16,6 +17,7 @@ build/
 Thumbs.db
 ._*
 *.log
+run-cloudflared.log
 desktop.ini
 *.swp
 *.swo
@@ -37,7 +39,7 @@ front_bot_php/vendor/
 HH бот/.env.dev
 
 # --- Alembic локальные
-HH бот/backend/alembic.ini.local
+backend/alembic.ini.local
 
 # --- PHP vendor уже есть; composer.lock лучше хранить в репозитории (для app)
 # front_bot_php/vendor/ (оставляем)
@@ -91,6 +93,7 @@ secrets-findings.*.json
 logs/
 .diagnostics/
 diag_bundle/
+*.bak
 
 # --- Nginx local-only bits
 nginx/.htpasswd
@@ -100,3 +103,18 @@ nginx/nginx.conf.safe
 # --- Docker local overrides
 docker-compose.override.yml
 docker-compose.local.yml
+
+ $([System.Environment]::NewLine)# Project secrets$([System.Environment]::NewLine)secrets/
+
+
+# Project secrets
+secrets/
+
+# === dedupe & caches ===
+.mypy_cache/
+**/__pycache__/
+.ruff_cache/
+.pytest_cache/
+.mirror.git/
+var/log/
+*.pyc

@@ -1,0 +1,25 @@
+diff --git a/backend/app/models/billing.py b/backend/app/models/billing.py
+index 5ffbb09..28ad22f 100644
+--- a/backend/app/models/billing.py
++++ b/backend/app/models/billing.py
+@@ -144,7 +144,6 @@ class ApplicationQuota(Base, TimestampMixin):
+             "consumed >= 0 AND consumed <= granted",
+             name="ck_application_quotas_consumed_range",
+         ),
+-        Index("ix_application_quotas_user_id", "user_id"),
+         Index(
+             "uq_application_quotas_trial_once_per_user",
+             "user_id",
+diff --git a/requirements.txt b/requirements.txt
+index 7351a57..542e402 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -5,3 +5,8 @@ asyncpg>=0.29
+ pydantic>=2
+ fastapi>=0.115
+ pydantic-settings>=2
++httpx>=0.26
++python-telegram-bot>=20
++redis>=5
++structlog>=23
++aiosqlite>=0.20

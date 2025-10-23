@@ -1,0 +1,15 @@
+# Alembic draft: payment_events
+
+upgrade steps:
+1. op.execute DO-block (create type payment_event_type_enum if not exists).
+2. op.create_table('payment_events', columns: id UUID, payment_id UUID nullable FK payments SET NULL, provider_event_id TEXT unique, event_type ENUM (native_enum=False), payload JSON, created_at timestamptz default now).
+3. op.create_index('ix_payment_events_payment_created', ['payment_id', 'created_at']).
+
+Downgrade steps:
+1. op.drop_index('ix_payment_events_payment_created').
+2. op.drop_table('payment_events').
+3. op.execute DO-block (drop type payment_event_type_enum if exists).
+
+Notes:
+- Для SQLite использовать SAEnum(..., native_enum=False).
+- Рассмотреть ON UPDATE CASCADE, если добавится.

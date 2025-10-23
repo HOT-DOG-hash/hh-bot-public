@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-logging: &default-logging
   driver: json-file
   options:
@@ -21,8 +19,9 @@ x-common-secure: &common_secure
 
 services:
   db:
+    <<: *common_secure
     image: postgres:16-alpine
-    env_file: [ .env ]
+    env_file: [ .env.prod ]
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -37,9 +36,11 @@ services:
       timeout: 5s
       retries: 10
     read_only: false
-    <<: *common_secure
+    cap_drop: []
+    security_opt: []
 
   cache:
+    <<: *common_secure
     image: redis:7-alpine
     command: ["redis-server","--save","60","1","--loglevel","warning"]
     volumes:
@@ -50,21 +51,42 @@ services:
       timeout: 3s
       retries: 10
     read_only: false
-    <<: *common_secure
+    cap_drop: []
+    security_opt: []
 
   web:
-    image: ghcr.io/<ORG>/hh-bot-web:latest
-    env_file: [ .env ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    # image: ghcr.io/<ORG>/hh-bot-web:latest
+    env_file: [ .env.prod ]
     environment:
-      PYTHONPATH: "/app:/app/HH бот"
+      PYTHONPATH: "/app:/app/HH бот:/app/backend"
       APP_ENV: ${APP_ENV:-prod}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       WEB_PORT: ${WEB_PORT:-8000}
       APP_MODULE: ${APP_MODULE:-backend.app.main:app}
+      BASE_URL: ${BASE_URL:-https://api.hhoffer.ru}
+      BACKEND_URL: ${BACKEND_URL:-https://api.hhoffer.ru}
+      OAUTH_HH_REDIRECT: ${OAUTH_HH_REDIRECT:-https://api.hhoffer.ru/oauth/hh/callback}
+      OAUTH_HH_REDIRECT_URI: ${OAUTH_HH_REDIRECT_URI:-https://api.hhoffer.ru/oauth/hh/callback}
+      PREMIUM_ENABLED: "1"
+      PAYMENT_PROVIDER: yoomoney
+      LOG_FILE: /var/log/app/app.log
     expose: [ "8000" ]
     volumes:
       - web_logs:/var/log/app
       - resumes:/app/media/resumes
+    secrets:
+      - source: hh_client_id
+        target: hh_client_id
+      - source: hh_client_secret
+        target: hh_client_secret
+      - source: yoomoney_client_id
+        target: yoomoney_client_id
+      - source: yoomoney_client_secret
+        target: yoomoney_client_secret
     healthcheck:
       test: ["CMD","curl","-fsS","http://127.0.0.1:8000/health"]
       interval: 30s
@@ -76,15 +98,32 @@ services:
     <<: *common_secure
 
   bot:
-    image: ghcr.io/<ORG>/hh-bot-bot:latest
-    env_file: [ .env ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: bot
+    # image: ghcr.io/<ORG>/hh-bot-bot:latest
+    env_file: [ .env.prod ]
     environment:
-      PYTHONPATH: "/app:/app/HH бот"
+      PYTHONPATH: "/app:/app/HH бот:/app/backend"
       BOT_LOG_DIR: /var/log/app
       BOT_LOG_FILE: /var/log/app/bot.log
+      BOT_SKIP_ENV_SOURCE: "1"
+      BACKEND_URL: http://web:8000
+      PAYMENT_PROVIDER: yoomoney
+      LOG_FILE: /var/log/app/app.log
     entrypoint: ["/bin/bash","-lc","exec \"/app/HH бот/bot/entrypoint.sh\""]
     volumes:
       - botlogs:/var/log/app
+    secrets:
+      - source: hh_client_id
+        target: hh_client_id
+      - source: hh_client_secret
+        target: hh_client_secret
+      - source: yoomoney_client_id
+        target: yoomoney_client_id
+      - source: yoomoney_client_secret
+        target: yoomoney_client_secret
     depends_on:
       db:    { condition: service_healthy }
       cache: { condition: service_healthy }
@@ -120,6 +159,9 @@ services:
       retries: 5
       start_period: 10s
     <<: *common_secure
+    read_only: false
+    cap_drop: []
+    security_opt: []
 
   nginx:
     image: nginx:1.27-alpine
@@ -129,7 +171,7 @@ services:
     ports:
       - "127.0.0.1:80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.http.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/html:/usr/share/nginx/html:ro
       - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
     healthcheck:
@@ -153,14 +195,67 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    command: ["tunnel","--no-autoupdate","run","--token","${CF_TUNNEL_TOKEN}"]
+    command:
+      [
+        "tunnel",
+        "--no-autoupdate",
+        "--edge-ip-version",
+        "4",
+        "--protocol",
+        "http2",
+        "--ha-connections",
+        "4",
+        "--metrics",
+        "0.0.0.0:20241",
+        "run",
+        "--token-file",
+        "/run/secrets/cf_tunnel_token"
+      ]
     environment:
-      CF_TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+      TUNNEL_LOGLEVEL: info
+      TUNNEL_TRANSPORT_LOGLEVEL: error
     depends_on:
-      nginx: { condition: service_started }
-    network_mode: "service:nginx"
+      nginx:
+        condition: service_healthy
     restart: unless-stopped
-    logging: *default-logging
+    # healthcheck без /bin/sh внутри образа
+    healthcheck:
+      test: ["CMD","/bin/sh","-c","grep -q 'Registered tunnel connection' /proc/1/fd/1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+    # подключаем секрет как файл
+    secrets:
+      - source: cf_tunnel_token
+        target: cf_tunnel_token
+    # чуть жёстче по безопасности (опционально)
+    read_only: true
+    pids_limit: 128
+    tmpfs:
+      - /tmp
+      - /var/tmp
+    # лог-лимиты (опционально)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Определение секрета (файл лежит у тебя локально)
+secrets:
+  cf_tunnel_token:
+    file: ./secrets/cf_tunnel_token.txt
+  hh_client_id:
+    file: ./secrets/hh_client_id.txt
+  hh_client_secret:
+    file: ./secrets/hh_client_secret.txt
+  yoomoney_client_id:
+    file: ./secrets/yoomoney_client_id.txt
+  yoomoney_client_secret:
+    file: ./secrets/yoomoney_client_secret.txt
+
+
 
 volumes:
   pgdata: {}

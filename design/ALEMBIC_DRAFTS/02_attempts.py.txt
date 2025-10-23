@@ -1,0 +1,16 @@
+# Alembic draft: payment_attempts
+
+upgrade steps:
+1. op.execute DO-block для типов provider_enum (если расширяем), payment_attempt_phase_enum.
+2. op.create_table('payment_attempts', колонки: id UUID PK, payment_id UUID FK payments ON DELETE CASCADE, phase ENUM, attempt_no INT, provider ENUM, ok BOOLEAN, error_code TEXT, error_message TEXT, duration_ms INT, next_retry_at TIMESTAMPTZ, idempotency_key TEXT уникальный, created_at TIMESTAMPTZ default now, updated_at TIMESTAMPTZ default now()).
+3. Создать ограничения: UNIQUE (payment_id, phase, attempt_no), UNIQUE (idempotency_key).
+4. Индексы: ix_payment_attempts_payment_phase (payment_id, phase), ix_payment_attempts_phase_updated (phase, updated_at).
+
+Downgrade steps:
+1. Удалить индексы.
+2. Удалить таблицу.
+3. op.execute DO-block для безопасного DROP TYPE payment_attempt_phase_enum (и provider_enum, если создавался в ревизии).
+
+Примечания:
+- Для SQLite ENUM → TEXT, BOOLEAN → Integer.
+- Возможно добавить CHECK: attempt_no > 0, duration_ms >= 0.

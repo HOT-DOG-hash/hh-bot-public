@@ -1,0 +1,457 @@
+name: hh-bot-public
+services:
+  bot:
+    build:
+      context: C:\git-public\hh-bot-public
+      dockerfile: Dockerfile
+      target: bot
+    depends_on:
+      cache:
+        condition: service_healthy
+        required: true
+      db:
+        condition: service_healthy
+        required: true
+    entrypoint:
+      - /bin/bash
+      - -lc
+      - exec "/app/HH бот/bot/entrypoint.sh"
+    environment:
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      ADMIN_BASIC_REALM: HHOFFER Admin
+      ADMIN_PASS: Q!w2e3r4
+      ADMIN_SECRET_TOKEN: SRxrGqElL4RsNzBs9w3w83gtanvtA6swrCqevymeKhsBehARxXkGX/AenCvpzz9p
+      ADMIN_USER: admin
+      APP_DEBUG: "false"
+      APP_ENV: production
+      APP_MODULE: backend.app.main:app
+      APP_VERSION: ""
+      BACKEND_URL: http://web:8000
+      BOT_LOG_DIR: /var/log/app
+      BOT_LOG_FILE: /var/log/app/bot.log
+      BOT_SKIP_ENV_SOURCE: "1"
+      CF_TUNNEL_TOKEN: ""
+      CORS_ORIGINS: '["https://hhoffer.ru","https://api.hhoffer.ru","https://dev.hhoffer.ru"]'
+      DATABASE_URL: postgresql+asyncpg://neondb_owner:npg_t6xcJGfQkvP0@ep-spring-paper-agl57x43-pooler.c-2.eu-central-1.aws.neon.tech/neondb?ssl=require
+      ENABLE_TELEGRAM_BOT: "0"
+      LOG_FILE: /var/log/app/app.log
+      LOG_LEVEL: INFO
+      NEON_DATABASE_URL: postgresql+asyncpg://neondb_owner:npg_RgxzuIv6b9lS@ep-young-wave-ad6is8x3-pooler.c-2.us-east-1.aws.neon.tech/neondb?ssl=require
+      PAYMENT_PROVIDER: yoomoney
+      POSTGRES_DB: hh
+      POSTGRES_PASSWORD: npg_t6xcJGfQkvP0
+      POSTGRES_USER: neonbd
+      PUBLIC_BASE_URL: https://api.hhoffer.ru
+      PYTHONPATH: /app:/app/HH бот
+      REDIS_URL: redis://cache:6379/0
+      SECRET_KEY: XOIj5k1Q0qZovJne0OyW9HvaEl6KFE8c8JkimOdavVYMDfz5rYA+Go1TRBhPXpwB
+      TELEGRAM_BOT_TOKEN: 7865199704:AAHjn5iTdVp7FM-VV2nMbzdhLWDyEq8fV8k
+      TZ: Europe/Moscow
+      WEB_PORT: "8000"
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -lc
+        - |
+          cat <<'PY' | python -
+          import asyncio, os
+          from sqlalchemy import text
+          from sqlalchemy.ext.asyncio import create_async_engine
+          import redis.asyncio as aioredis
+
+
+          async def main():
+              engine = create_async_engine(os.environ['DATABASE_URL'], future=True)
+              async with engine.connect() as conn:
+                  await conn.execute(text('SELECT 1'))
+              redis_url = os.environ.get('REDIS_URL')
+              if redis_url:
+                  client = aioredis.from_url(redis_url)
+                  try:
+                      await client.ping()
+                  finally:
+                      await client.aclose()
+
+          asyncio.run(main())
+          PY
+      timeout: 10s
+      interval: 30s
+      retries: 5
+      start_period: 10s
+    init: true
+    logging:
+      driver: json-file
+      options:
+        compress: "true"
+        max-file: "5"
+        max-size: 10m
+    networks:
+      default: null
+    restart: unless-stopped
+    secrets:
+      - source: hh_client_id
+        target: hh_client_id
+      - source: hh_client_secret
+        target: hh_client_secret
+      - source: yoomoney_client_id
+        target: yoomoney_client_id
+      - source: yoomoney_client_secret
+        target: yoomoney_client_secret
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: volume
+        source: botlogs
+        target: /var/log/app
+        volume: {}
+  cache:
+    command:
+      - redis-server
+      - --save
+      - "60"
+      - "1"
+      - --loglevel
+      - warning
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      timeout: 3s
+      interval: 5s
+      retries: 10
+    image: redis:7-alpine
+    init: true
+    logging:
+      driver: json-file
+      options:
+        compress: "true"
+        max-file: "5"
+        max-size: 10m
+    networks:
+      default: null
+    restart: unless-stopped
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: volume
+        source: redisdata
+        target: /data
+        volume: {}
+  cloudflared:
+    command:
+      - tunnel
+      - --no-autoupdate
+      - --edge-ip-version
+      - "4"
+      - --protocol
+      - http2
+      - --ha-connections
+      - "4"
+      - --metrics
+      - 0.0.0.0:20241
+      - run
+      - --token-file
+      - /run/secrets/cf_tunnel_token
+    depends_on:
+      nginx:
+        condition: service_healthy
+        required: true
+    environment:
+      TUNNEL_LOGLEVEL: info
+      TUNNEL_TRANSPORT_LOGLEVEL: error
+    healthcheck:
+      test:
+        - CMD
+        - /bin/sh
+        - -c
+        - grep -q 'Registered tunnel connection' /proc/1/fd/1 || exit 1
+      timeout: 5s
+      interval: 15s
+      retries: 8
+      start_period: 20s
+    image: cloudflare/cloudflared:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 10m
+    networks:
+      default: null
+    pids_limit: 128
+    read_only: true
+    restart: unless-stopped
+    secrets:
+      - source: cf_tunnel_token
+        target: cf_tunnel_token
+    tmpfs:
+      - /tmp
+      - /var/tmp
+  db:
+    environment:
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      ADMIN_BASIC_REALM: HHOFFER Admin
+      ADMIN_PASS: Q!w2e3r4
+      ADMIN_SECRET_TOKEN: SRxrGqElL4RsNzBs9w3w83gtanvtA6swrCqevymeKhsBehARxXkGX/AenCvpzz9p
+      ADMIN_USER: admin
+      APP_DEBUG: "false"
+      APP_ENV: production
+      APP_MODULE: backend.app.main:app
+      APP_VERSION: ""
+      BOT_LOG_DIR: /var/log/app
+      BOT_LOG_FILE: /var/log/app/bot.log
+      CF_TUNNEL_TOKEN: ""
+      CORS_ORIGINS: '["https://hhoffer.ru","https://api.hhoffer.ru","https://dev.hhoffer.ru"]'
+      DATABASE_URL: postgresql+asyncpg://neondb_owner:npg_t6xcJGfQkvP0@ep-spring-paper-agl57x43-pooler.c-2.eu-central-1.aws.neon.tech/neondb?ssl=require
+      ENABLE_TELEGRAM_BOT: "0"
+      LOG_FILE: /var/log/app/app.log
+      LOG_LEVEL: INFO
+      NEON_DATABASE_URL: postgresql+asyncpg://neondb_owner:npg_RgxzuIv6b9lS@ep-young-wave-ad6is8x3-pooler.c-2.us-east-1.aws.neon.tech/neondb?ssl=require
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: hh
+      POSTGRES_PASSWORD: npg_t6xcJGfQkvP0
+      POSTGRES_USER: neonbd
+      PUBLIC_BASE_URL: https://api.hhoffer.ru
+      REDIS_URL: redis://cache:6379/0
+      SECRET_KEY: XOIj5k1Q0qZovJne0OyW9HvaEl6KFE8c8JkimOdavVYMDfz5rYA+Go1TRBhPXpwB
+      TELEGRAM_BOT_TOKEN: 7865199704:AAHjn5iTdVp7FM-VV2nMbzdhLWDyEq8fV8k
+      TZ: Europe/Moscow
+      WEB_PORT: "8000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U neonbd -d hh
+      timeout: 5s
+      interval: 10s
+      retries: 10
+    image: postgres:16-alpine
+    init: true
+    logging:
+      driver: json-file
+      options:
+        compress: "true"
+        max-file: "5"
+        max-size: 10m
+    networks:
+      default: null
+    restart: unless-stopped
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: volume
+        source: pgdata
+        target: /var/lib/postgresql/data
+        volume: {}
+  nginx:
+    command:
+      - sh
+      - -lc
+      - |-
+        set -eu;
+                for d in client_temp proxy_temp fastcgi_temp uwsgi_temp scgi_temp; do
+                  mkdir -p "/var/cache/nginx/$$d";
+                  chmod 0777 "/var/cache/nginx/$$d";
+                done;
+                exec nginx -g "daemon off;"
+    depends_on:
+      web:
+        condition: service_healthy
+        required: true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1/healthz | grep -q ok
+      timeout: 5s
+      interval: 30s
+      retries: 5
+    image: nginx:1.27-alpine
+    logging:
+      driver: json-file
+      options:
+        compress: "true"
+        max-file: "5"
+        max-size: 10m
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        host_ip: 127.0.0.1
+        target: 80
+        published: "80"
+        protocol: tcp
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    volumes:
+      - type: bind
+        source: C:\git-public\hh-bot-public\nginx\nginx.http.conf
+        target: /etc/nginx/nginx.conf
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\git-public\hh-bot-public\nginx\html
+        target: /usr/share/nginx/html
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: C:\git-public\hh-bot-public\nginx\.htpasswd
+        target: /etc/nginx/.htpasswd
+        read_only: true
+        bind:
+          create_host_path: true
+  web:
+    build:
+      context: C:\git-public\hh-bot-public
+      dockerfile: Dockerfile
+      target: web
+    cap_drop:
+      - ALL
+    depends_on:
+      cache:
+        condition: service_healthy
+        required: true
+      db:
+        condition: service_healthy
+        required: true
+    environment:
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      ADMIN_BASIC_REALM: HHOFFER Admin
+      ADMIN_PASS: Q!w2e3r4
+      ADMIN_SECRET_TOKEN: SRxrGqElL4RsNzBs9w3w83gtanvtA6swrCqevymeKhsBehARxXkGX/AenCvpzz9p
+      ADMIN_USER: admin
+      APP_DEBUG: "false"
+      APP_ENV: production
+      APP_MODULE: backend.app.main:app
+      APP_VERSION: ""
+      BACKEND_URL: https://api.hhoffer.ru
+      BASE_URL: https://api.hhoffer.ru
+      BOT_LOG_DIR: /var/log/app
+      BOT_LOG_FILE: /var/log/app/bot.log
+      CF_TUNNEL_TOKEN: ""
+      CORS_ORIGINS: '["https://hhoffer.ru","https://api.hhoffer.ru","https://dev.hhoffer.ru"]'
+      DATABASE_URL: postgresql+asyncpg://neondb_owner:npg_t6xcJGfQkvP0@ep-spring-paper-agl57x43-pooler.c-2.eu-central-1.aws.neon.tech/neondb?ssl=require
+      ENABLE_TELEGRAM_BOT: "0"
+      LOG_FILE: /var/log/app/app.log
+      LOG_LEVEL: INFO
+      NEON_DATABASE_URL: postgresql+asyncpg://neondb_owner:npg_RgxzuIv6b9lS@ep-young-wave-ad6is8x3-pooler.c-2.us-east-1.aws.neon.tech/neondb?ssl=require
+      OAUTH_HH_REDIRECT: https://api.hhoffer.ru/oauth/hh/callback
+      OAUTH_HH_REDIRECT_URI: https://api.hhoffer.ru/oauth/hh/callback
+      PAYMENT_PROVIDER: yoomoney
+      POSTGRES_DB: hh
+      POSTGRES_PASSWORD: npg_t6xcJGfQkvP0
+      POSTGRES_USER: neonbd
+      PREMIUM_ENABLED: "1"
+      PUBLIC_BASE_URL: https://api.hhoffer.ru
+      PYTHONPATH: /app:/app/HH бот
+      REDIS_URL: redis://cache:6379/0
+      SECRET_KEY: XOIj5k1Q0qZovJne0OyW9HvaEl6KFE8c8JkimOdavVYMDfz5rYA+Go1TRBhPXpwB
+      TELEGRAM_BOT_TOKEN: 7865199704:AAHjn5iTdVp7FM-VV2nMbzdhLWDyEq8fV8k
+      TZ: Europe/Moscow
+      WEB_PORT: "8000"
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fsS
+        - http://127.0.0.1:8000/health
+      timeout: 5s
+      interval: 30s
+      retries: 5
+    init: true
+    logging:
+      driver: json-file
+      options:
+        compress: "true"
+        max-file: "5"
+        max-size: 10m
+    networks:
+      default: null
+    read_only: true
+    restart: unless-stopped
+    secrets:
+      - source: hh_client_id
+        target: hh_client_id
+      - source: hh_client_secret
+        target: hh_client_secret
+      - source: yoomoney_client_id
+        target: yoomoney_client_id
+      - source: yoomoney_client_secret
+        target: yoomoney_client_secret
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: volume
+        source: web_logs
+        target: /var/log/app
+        volume: {}
+      - type: volume
+        source: resumes
+        target: /app/media/resumes
+        volume: {}
+networks:
+  default:
+    name: hh-bot-public_default
+volumes:
+  botlogs:
+    name: hh-bot-public_botlogs
+  pgdata:
+    name: hh-bot-public_pgdata
+  redisdata:
+    name: hh-bot-public_redisdata
+  resumes:
+    name: hh-bot-public_resumes
+  web_logs:
+    name: hh-bot-public_web_logs
+secrets:
+  cf_tunnel_token:
+    name: hh-bot-public_cf_tunnel_token
+    file: C:\git-public\hh-bot-public\secrets\cf_tunnel_token.txt
+  hh_client_id:
+    name: hh-bot-public_hh_client_id
+    file: C:\git-public\hh-bot-public\secrets\hh_client_id.txt
+  hh_client_secret:
+    name: hh-bot-public_hh_client_secret
+    file: C:\git-public\hh-bot-public\secrets\hh_client_secret.txt
+  yoomoney_client_id:
+    name: hh-bot-public_yoomoney_client_id
+    file: C:\git-public\hh-bot-public\secrets\yoomoney_client_id.txt
+  yoomoney_client_secret:
+    name: hh-bot-public_yoomoney_client_secret
+    file: C:\git-public\hh-bot-public\secrets\yoomoney_client_secret.txt
+x-common-secure:
+  cap_drop:
+    - ALL
+  init: true
+  logging:
+    driver: json-file
+    options:
+      compress: "true"
+      max-file: "5"
+      max-size: 10m
+  read_only: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  stop_grace_period: 30s
+  tmpfs:
+    - /tmp
+x-logging:
+  driver: json-file
+  options:
+    compress: "true"
+    max-file: "5"
+    max-size: 10m

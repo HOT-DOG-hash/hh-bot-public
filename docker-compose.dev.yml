@@ -1,0 +1,31 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: hh-bot-dev:latest
+    working_dir: /app
+    command: bash -lc "bash scripts/dev_check.sh || true"
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://dev:dev@db:5432/hhbot}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: hhbot
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+
+  redis:
+    image: redis:7
+
+volumes:
+  pgdata:

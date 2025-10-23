@@ -25,6 +25,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, TimestampMixin, UUIDType
 
 if TYPE_CHECKING:
+    from .core import User
     from .payments import Payment
 
 
@@ -81,7 +82,6 @@ class Subscription(Base, TimestampMixin):
         UUIDType(),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=text("gen_random_uuid()"),
     )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -106,6 +106,7 @@ class Subscription(Base, TimestampMixin):
     )
 
     plan: Mapped[Plan] = relationship(back_populates="subscriptions")
+    user: Mapped["User"] = relationship("User", back_populates="subscriptions")
     payments: Mapped[list[Payment]] = relationship("Payment", back_populates="subscription")
 
     __table_args__ = (
@@ -121,7 +122,6 @@ class ApplicationQuota(Base, TimestampMixin):
         UUIDType(),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=text("gen_random_uuid()"),
     )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True

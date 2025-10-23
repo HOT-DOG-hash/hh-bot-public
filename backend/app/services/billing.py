@@ -1,33 +1,31 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Iterable
 
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.core.config import settings
 from backend.app.models import Payment, Subscription, User
-from backend.app.payments.base import PaymentProviderError, PaymentStatus
+from backend.app.models.billing import SubscriptionStatus
+from backend.app.models.payments import PaymentStatus, Provider
+from backend.app.payments.base import (
+    PaymentProviderError,
+    PaymentStatus as ProviderPaymentStatus,
+)
 from backend.app.payments.yoomoney import provider as yoomoney_provider
 
 PLAN_CONFIG: dict[str, dict[str, Any]] = {
-    "premium-week": {
-        "amount": 690.0,
-        "amount_minor": 69000,
+    "FREE_TRIAL": {
+        "amount": 0.0,
+        "amount_minor": 0,
         "currency": "RUB",
-        "description": "Premium plan (7 days)",
-        "duration_days": 7,
-    },
-    "premium-month": {
-        "amount": 1900.0,
-        "amount_minor": 190000,
-        "currency": "RUB",
-        "description": "Premium plan (30 days)",
-        "duration_days": 30,
+        "description": "Free trial (10 откликов)",
+        "duration_days": 0,
+        "granted_quota": 10,
     },
     "WEEKLY": {
         "amount": 690.0,
@@ -45,8 +43,8 @@ PLAN_CONFIG: dict[str, dict[str, Any]] = {
     },
 }
 
-IN_PROGRESS_STATUSES: set[str] = {"created", "pending", "waiting_for_capture"}
-PAID_STATUS = "paid"
+IN_PROGRESS_STATUSES: set[PaymentStatus] = {PaymentStatus.PENDING}
+PAID_STATUS = PaymentStatus.SUCCEEDED
 
 
 class BillingPlanNotFoundError(ValueError):
@@ -70,7 +68,7 @@ class PaymentCreationResult:
 @dataclass(slots=True)
 class PaymentStatusResult:
     payment: Payment
-    provider_status: PaymentStatus
+    provider_status: ProviderPaymentStatus
     subscription: Subscription | None
 
 
@@ -78,15 +76,15 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _normalize_plan_code(plan_code: str) -> str:
+    return plan_code.upper()
+
+
 def get_plan_config(plan_code: str) -> dict[str, Any]:
-    candidates = (
-        PLAN_CONFIG.get(plan_code),
-        PLAN_CONFIG.get(plan_code.upper()),
-        PLAN_CONFIG.get(plan_code.lower()),
-    )
-    for plan in candidates:
-        if plan:
-            return plan
+    normalized = _normalize_plan_code(plan_code)
+    plan = PLAN_CONFIG.get(normalized)
+    if plan:
+        return plan
     raise BillingPlanNotFoundError(plan_code)
 
 
@@ -109,15 +107,19 @@ def _idempotence_key(user: User, plan_code: str) -> str:
     return digest[:64]
 
 
-def _extract_pay_url(payment: Payment) -> str | None:
-    payload = payment.payload_json or {}
-    return payload.get("confirmation_url")
+def _payment_payload(payment: Payment) -> dict[str, Any]:
+    return dict(payment.raw or {})
 
 
 def _update_payment_payload(payment: Payment, data: dict[str, Any]) -> None:
-    payload = payment.payload_json or {}
+    payload = _payment_payload(payment)
     payload.update(data)
-    payment.payload_json = payload
+    payment.raw = payload
+
+
+def _extract_pay_url(payment: Payment) -> str | None:
+    payload = _payment_payload(payment)
+    return payload.get("confirmation_url")
 
 
 async def _find_latest_payment(
@@ -125,14 +127,13 @@ async def _find_latest_payment(
     *,
     user_id: int,
     plan_code: str,
-    statuses: Iterable[str],
+    statuses: Iterable[PaymentStatus],
 ) -> Payment | None:
     stmt: Select[tuple[Payment]] = (
         select(Payment)
         .where(
             Payment.user_id == user_id,
-            Payment.provider == settings.payment_provider,
-            Payment.plan == plan_code,
+            Payment.plan_code == plan_code,
             Payment.status.in_(tuple(statuses)),
         )
         .order_by(Payment.created_at.desc())
@@ -142,6 +143,26 @@ async def _find_latest_payment(
     return result.scalar_one_or_none()
 
 
+def _map_provider_status(status: str | None) -> PaymentStatus:
+    mapping = {
+        "pending": PaymentStatus.PENDING,
+        "waiting_for_capture": PaymentStatus.PENDING,
+        "succeeded": PaymentStatus.SUCCEEDED,
+        "canceled": PaymentStatus.CANCELED,
+        "canceled_by_yoo": PaymentStatus.CANCELED,
+        "expired": PaymentStatus.EXPIRED,
+        "failed": PaymentStatus.FAILED,
+    }
+    return mapping.get((status or "").lower(), PaymentStatus.PENDING)
+
+
+def _resolve_provider() -> Provider:
+    try:
+        return Provider(settings.payment_provider)
+    except ValueError as exc:  # pragma: no cover - misconfiguration
+        raise BillingProviderFailure(f"Unsupported payment provider: {settings.payment_provider}") from exc
+
+
 async def create_payment(
     session: AsyncSession,
     *,
@@ -149,61 +170,83 @@ async def create_payment(
     plan_code: str,
     return_url: str,
 ) -> PaymentCreationResult:
-    plan = get_plan_config(plan_code)
+    normalized_plan = _normalize_plan_code(plan_code)
+    plan_cfg = get_plan_config(normalized_plan)
     user = await _ensure_user(session, user_token)
+    key = _idempotence_key(user, normalized_plan)
 
     existing = await _find_latest_payment(
         session,
         user_id=user.id,
-        plan_code=plan_code,
-        statuses=IN_PROGRESS_STATUSES | {PAID_STATUS},
+        plan_code=normalized_plan,
+        statuses=IN_PROGRESS_STATUSES,
     )
     if existing:
-        pay_url = _extract_pay_url(existing)
-        if existing.status in IN_PROGRESS_STATUSES and pay_url:
-            return PaymentCreationResult(payment=existing, pay_url=pay_url)
-        if existing.status == PAID_STATUS:
-            return PaymentCreationResult(payment=existing, pay_url=pay_url or return_url)
+        url = _extract_pay_url(existing) or return_url
+        return PaymentCreationResult(payment=existing, pay_url=url)
 
-    metadata = {"plan": plan_code, "user_id": user.id}
-    idempotence_key = _idempotence_key(user, plan_code)
-
-    try:
-        invoice = await yoomoney_provider.create_payment(
-            amount_rub=float(plan["amount"]),
-            description=str(plan["description"]),
-            return_url=return_url,
-            metadata=metadata,
-            idempotence_key=idempotence_key,
-        )
-    except PaymentProviderError as exc:
-        raise BillingProviderFailure(str(exc)) from exc
-
-    amount_minor = int(round(float(plan["amount"]) * 100))
-    now = _now()
+    amount_minor = int(plan_cfg.get("amount_minor") or round(float(plan_cfg["amount"]) * 100))
+    currency = str(plan_cfg.get("currency", "RUB"))
+    provider_enum = _resolve_provider()
+    metadata = {
+        "user_id": str(user.id),
+        "plan_code": normalized_plan,
+        "idempotence_key": key,
+    }
 
     payment = Payment(
         user_id=user.id,
-        provider=settings.payment_provider,
-        external_id=invoice.external_id,
-        plan=plan_code,
-        amount=amount_minor,
-        currency=str(plan["currency"]),
-        status=invoice.status or "created",
-        payload_json={
-            "plan": plan_code,
-            "confirmation_url": invoice.confirmation_url,
+        plan_code=normalized_plan,
+        provider=provider_enum,
+        idempotency_key=key,
+        amount_minor=amount_minor,
+        currency=currency,
+        status=PaymentStatus.PENDING,
+    )
+    session.add(payment)
+    await session.flush()
+
+    metadata["payment_id"] = str(payment.id)
+
+    try:
+        invoice = await yoomoney_provider.create_payment(
+            amount_rub=float(plan_cfg["amount"]),
+            description=str(plan_cfg.get("description") or normalized_plan),
+            return_url=return_url,
+            metadata=metadata,
+            idempotence_key=key,
+        )
+    except PaymentProviderError as exc:
+        payment.status = PaymentStatus.FAILED
+        _update_payment_payload(
+            payment,
+            {
+                "error": str(exc),
+                "metadata": metadata,
+            },
+        )
+        await session.commit()
+        raise BillingProviderFailure(str(exc)) from exc
+
+    payment.provider_payment_id = invoice.external_id or payment.provider_payment_id
+    _update_payment_payload(
+        payment,
+        {
             "provider_status": invoice.status,
-            "created_at": invoice.created_at.isoformat() if invoice.created_at else None,
+            "confirmation_url": invoice.confirmation_url,
+            "metadata": metadata,
             "raw": invoice.raw,
+            "return_url": return_url,
         },
     )
-    user.last_activity = now
-    session.add_all([payment, user])
+
+    user.last_activity = _now()
+    session.add(user)
     await session.commit()
     await session.refresh(payment)
 
-    return PaymentCreationResult(payment=payment, pay_url=invoice.confirmation_url)
+    url = _extract_pay_url(payment) or return_url
+    return PaymentCreationResult(payment=payment, pay_url=url)
 
 
 async def refresh_payment_status(
@@ -218,8 +261,8 @@ async def refresh_payment_status(
         select(Payment)
         .where(
             Payment.user_id == user.id,
-            Payment.provider == settings.payment_provider,
-            Payment.external_id == external_id,
+            Payment.provider == _resolve_provider(),
+            Payment.provider_payment_id == external_id,
         )
         .limit(1)
     )
@@ -233,30 +276,28 @@ async def refresh_payment_status(
     except PaymentProviderError as exc:
         raise BillingProviderFailure(str(exc)) from exc
 
-    status = provider_status.status
-    if status == "succeeded":
-        payment.status = PAID_STATUS
-    else:
-        payment.status = status
-
+    mapped_status = _map_provider_status(provider_status.status)
+    payment.status = mapped_status
     _update_payment_payload(
         payment,
         {
-            "provider_status": status,
+            "provider_status": provider_status.status,
             "paid_at": provider_status.paid_at.isoformat() if provider_status.paid_at else None,
             "raw": provider_status.raw,
         },
     )
 
     subscription: Subscription | None = None
-    if payment.status == PAID_STATUS:
-        plan = PLAN_CONFIG.get(payment.plan, PLAN_CONFIG["premium-month"])
+    if mapped_status is PAID_STATUS:
+        plan_cfg = get_plan_config(payment.plan_code)
         subscription = await activate_subscription(
             session,
             user=user,
-            plan_code=payment.plan,
-            duration_days=int(plan["duration_days"]),
+            plan_code=payment.plan_code,
+            duration_days=int(plan_cfg.get("duration_days", 0)),
         )
+        if subscription:
+            payment.subscription_id = subscription.id
 
     user.last_activity = _now()
     session.add_all([payment, user])
@@ -265,7 +306,9 @@ async def refresh_payment_status(
         await session.refresh(subscription)
 
     return PaymentStatusResult(
-        payment=payment, provider_status=provider_status, subscription=subscription
+        payment=payment,
+        provider_status=provider_status,
+        subscription=subscription,
     )
 
 
@@ -276,9 +319,10 @@ async def activate_subscription(
     plan_code: str,
     duration_days: int,
 ) -> Subscription:
+    normalized_plan = _normalize_plan_code(plan_code)
     stmt = (
         select(Subscription)
-        .where(Subscription.user_id == user.id, Subscription.plan == plan_code)
+        .where(Subscription.user_id == user.id, Subscription.plan_code == normalized_plan)
         .order_by(Subscription.created_at.desc())
         .limit(1)
     )
@@ -286,22 +330,25 @@ async def activate_subscription(
     subscription = result.scalar_one_or_none()
     now = _now()
 
+    period_end = now + timedelta(days=duration_days) if duration_days > 0 else None
+
     if subscription:
-        base = subscription.valid_until or now
+        base = subscription.current_period_end or now
         if base < now:
             base = now
-        subscription.valid_until = base + timedelta(days=duration_days)
-        subscription.status = "active"
-        subscription.active = True
-        subscription.auto_renew = False
+        subscription.current_period_start = now
+        subscription.current_period_end = base + timedelta(days=duration_days)
+        subscription.status = SubscriptionStatus.ACTIVE
     else:
         subscription = Subscription(
             user_id=user.id,
-            plan=plan_code,
-            status="active",
-            active=True,
-            valid_until=now + timedelta(days=duration_days),
-            auto_renew=False,
+            plan_code=normalized_plan,
+            status=SubscriptionStatus.ACTIVE,
+            current_period_start=now,
+            current_period_end=period_end,
+            next_charge_at=period_end,
+            cancel_at=None,
+            cancel_at_period_end=False,
         )
         session.add(subscription)
 
@@ -317,7 +364,10 @@ async def get_subscription(
     stmt = (
         select(Subscription)
         .where(Subscription.user_id == user.id)
-        .order_by(Subscription.valid_until.desc().nulls_last(), Subscription.created_at.desc())
+        .order_by(
+            Subscription.current_period_end.is_(None),
+            Subscription.current_period_end.desc().nullslast(),
+        )
         .limit(1)
     )
     result = await session.execute(stmt)

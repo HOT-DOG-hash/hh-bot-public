@@ -214,3 +214,4 @@ def test_payment_uniqueness(migrated_engine):
                     "subscription_id": subscription_id,
                 },
             )
+pytestmark = pytest.mark.pg

@@ -28,12 +28,29 @@ if TYPE_CHECKING:
     from .core import User
 
 
+
 class PaymentStatus(str, Enum):
     PENDING = "pending"
     SUCCEEDED = "succeeded"
     CANCELED = "canceled"
     EXPIRED = "expired"
     FAILED = "failed"
+
+
+class PaymentEventType(str, Enum):
+    WAITING_FOR_CAPTURE = "payment.waiting_for_capture"
+    PENDING = "payment.pending"
+    SUCCEEDED = "payment.succeeded"
+    CANCELED = "payment.canceled"
+    FAILED = "payment.failed"
+
+
+class PaymentAttemptPhase(str, Enum):
+    INIT = "init"
+    PROVIDER_CALL = "provider_call"
+    WEBHOOK = "webhook"
+    RETRY = "retry"
+    FINAL = "final"
 
 
 class Provider(str, Enum):
@@ -47,7 +64,6 @@ class Payment(Base, TimestampMixin):
         UUIDType(),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=text("gen_random_uuid()"),
     )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -95,17 +111,24 @@ class Payment(Base, TimestampMixin):
 class PaymentEvent(Base):
     __tablename__ = "payment_events"
 
+    __table_args__ = (
+        UniqueConstraint("provider_event_id", name="uq_payment_events_provider_event_id"),
+        Index("ix_payment_events_payment_created", "payment_id", "created_at"),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(
         UUIDType(),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=text("gen_random_uuid()"),
     )
     payment_id: Mapped[uuid.UUID | None] = mapped_column(
         UUIDType(), ForeignKey("payments.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    provider_event_id: Mapped[str] = mapped_column(String(length=128), nullable=False, unique=True)
-    event_type: Mapped[str] = mapped_column(String(length=64), nullable=False)
+    provider_event_id: Mapped[str] = mapped_column(String(length=128), nullable=False)
+    event_type: Mapped[PaymentEventType] = mapped_column(
+        SAEnum(PaymentEventType, name="payment_event_type_enum", native_enum=False),
+        nullable=False,
+    )
     payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -123,13 +146,15 @@ class PaymentAttempt(Base):
         UUIDType(),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=text("gen_random_uuid()"),
     )
     payment_id: Mapped[uuid.UUID] = mapped_column(
         UUIDType(), ForeignKey("payments.id", ondelete="CASCADE"), nullable=False
     )
     attempt_no: Mapped[int] = mapped_column(Integer, nullable=False)
-    phase: Mapped[str] = mapped_column(String(length=32), nullable=False)
+    phase: Mapped[PaymentAttemptPhase] = mapped_column(
+        SAEnum(PaymentAttemptPhase, name="payment_attempt_phase_enum", native_enum=False),
+        nullable=False,
+    )
     ok: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     duration_ms: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -137,6 +162,12 @@ class PaymentAttempt(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+        server_onupdate=text("CURRENT_TIMESTAMP"),
     )
 
     payment: Mapped[Payment] = relationship("Payment", back_populates="attempts")
@@ -149,6 +180,7 @@ class PaymentAttempt(Base):
             name="uq_payment_attempts_phase_order",
         ),
         Index("ix_payment_attempts_payment_phase", "payment_id", "phase"),
+        Index("ix_payment_attempts_phase_updated", "phase", "updated_at"),
     )
 
 

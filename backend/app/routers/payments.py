@@ -37,12 +37,14 @@ def _user_token_header(raw_token: str | None) -> str:
 
 def _format_initiation_result(result: PaymentInitiationResult) -> dict[str, Any]:
     payment = result.payment
+    provider_value = payment.provider.value if hasattr(payment.provider, "value") else str(payment.provider)
+    status_value = payment.status.value if hasattr(payment.status, "value") else str(payment.status)
     return {
-        "payment_id": payment.id,
-        "provider": payment.provider,
-        "provider_payment_id": payment.external_id,
-        "plan_code": payment.plan,
-        "status": payment.status,
+        "payment_id": str(payment.id),
+        "provider": provider_value,
+        "provider_payment_id": payment.provider_payment_id,
+        "plan_code": payment.plan_code,
+        "status": status_value,
         "idempotency_key": result.idempotency_key,
         "confirmation_url": result.confirmation_url,
     }
@@ -82,7 +84,7 @@ async def payment_webhook(
 
 @router.get("/{payment_id}/status")
 async def payment_status_endpoint(
-    payment_id: int,
+    payment_id: str,
     session: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     try:

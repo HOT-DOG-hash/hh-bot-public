@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.core.config import settings
 from backend.app.core.db import get_db
+from backend.app.models.billing import SubscriptionStatus
+from backend.app.models.payments import PaymentStatus
 from backend.app.services import billing as billing_service
 from backend.app.services.billing import (
     BillingPlanNotFoundError,
@@ -52,10 +54,15 @@ async def create_billing_invoice(
     except BillingProviderFailure as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from None
 
+    payment = result.payment
+    status_value = (
+        payment.status.value if isinstance(payment.status, PaymentStatus) else str(payment.status)
+    )
+
     return {
-        "external_id": result.payment.external_id,
+        "external_id": payment.provider_payment_id,
         "pay_url": result.pay_url,
-        "status": result.payment.status,
+        "status": status_value,
         "provider": settings.payment_provider,
     }
 
@@ -80,21 +87,28 @@ async def billing_status(
             status_code=status.HTTP_404_NOT_FOUND, detail="Платёж не найден"
         ) from None
 
+    payment = result.payment
+    status_value = (
+        payment.status.value if isinstance(payment.status, PaymentStatus) else str(payment.status)
+    )
+
     subscription_payload: dict[str, object] | None = None
     if result.subscription:
         subscription_payload = {
-            "plan": result.subscription.plan,
-            "status": result.subscription.status,
+            "plan": result.subscription.plan_code,
+            "status": result.subscription.status.value
+            if isinstance(result.subscription.status, SubscriptionStatus)
+            else str(result.subscription.status),
             "valid_until": (
-                result.subscription.valid_until.isoformat()
-                if result.subscription.valid_until
+                result.subscription.current_period_end.isoformat()
+                if result.subscription.current_period_end
                 else None
             ),
         }
 
     return {
-        "external_id": result.payment.external_id,
-        "status": result.payment.status,
+        "external_id": payment.provider_payment_id,
+        "status": status_value,
         "provider_status": result.provider_status.status,
         "premium": subscription_payload,
     }
@@ -111,7 +125,7 @@ async def subscription_status(
         return {"active": False, "plan": None, "until": None}
 
     return {
-        "active": subscription.status == "active",
-        "plan": subscription.plan,
-        "until": subscription.valid_until.isoformat() if subscription.valid_until else None,
+        "active": subscription.status == SubscriptionStatus.ACTIVE,
+        "plan": subscription.plan_code,
+        "until": subscription.current_period_end.isoformat() if subscription.current_period_end else None,
     }

@@ -10,6 +10,7 @@ import pytest
 from backend.app.core import metrics
 from backend.app.core.config import settings
 from backend.app.models import Payment, PaymentAttempt, PaymentEvent, Subscription, User
+from backend.app.models.payments import PaymentAttemptPhase, PaymentStatus, Provider
 from backend.app.payments.base import PaymentInvoice, PaymentProviderError
 from backend.app.payments.yoomoney import provider as yoomoney_provider
 from sqlalchemy import func, select
@@ -81,15 +82,14 @@ async def test_webhook_dedup(client, session_factory, monkeypatch):
         user = await _create_user(session)
         payment = Payment(
             user_id=user.id,
-            provider="yoomoney",
-            external_id="pay-1",
-            plan="WEEKLY",
-            amount=69000,
+            provider=Provider.YOOMONEY,
+            provider_payment_id="pay-1",
+            plan_code="WEEKLY",
+            amount_minor=69000,
             currency="RUB",
-            status="pending",
-            payload_json={},
+            status=PaymentStatus.PENDING,
+            raw={"confirmation_url": "https://pay/1"},
             idempotency_key="idem-webhook",
-            confirmation_url="https://pay/1",
         )
         session.add(payment)
         await session.commit()
@@ -118,7 +118,7 @@ async def test_webhook_dedup(client, session_factory, monkeypatch):
 
     async with session_factory() as session:
         payment = await session.get(Payment, payment_id)
-        assert payment.status == "succeeded"
+        assert payment.status == PaymentStatus.SUCCEEDED
         events = await session.execute(
             select(PaymentEvent).where(PaymentEvent.payment_id == payment_id)
         )
@@ -134,15 +134,14 @@ async def test_fsm_transitions(client, session_factory, monkeypatch):
         user = await _create_user(session)
         payment = Payment(
             user_id=user.id,
-            provider="yoomoney",
-            external_id="pay-fsm",
-            plan="WEEKLY",
-            amount=69000,
+            provider=Provider.YOOMONEY,
+            provider_payment_id="pay-fsm",
+            plan_code="WEEKLY",
+            amount_minor=69000,
             currency="RUB",
-            status="pending",
-            payload_json={},
+            status=PaymentStatus.PENDING,
+            raw={"confirmation_url": "https://pay/fsm"},
             idempotency_key="idem-fsm",
-            confirmation_url="https://pay/fsm",
         )
         session.add(payment)
         await session.commit()
@@ -170,15 +169,14 @@ async def test_fsm_transitions(client, session_factory, monkeypatch):
     async with session_factory() as session:
         other = Payment(
             user_id=user_id,
-            provider="yoomoney",
-            external_id="pay-exp",
-            plan="WEEKLY",
-            amount=69000,
+            provider=Provider.YOOMONEY,
+            provider_payment_id="pay-exp",
+            plan_code="WEEKLY",
+            amount_minor=69000,
             currency="RUB",
-            status="pending",
-            payload_json={},
+            status=PaymentStatus.PENDING,
+            raw={"confirmation_url": "https://pay/exp"},
             idempotency_key="idem-exp",
-            confirmation_url="https://pay/exp",
         )
         session.add(other)
         await session.commit()
@@ -202,7 +200,7 @@ async def test_fsm_transitions(client, session_factory, monkeypatch):
 
     async with session_factory() as session:
         payment = await session.get(Payment, payment_id)
-        assert payment.status == "succeeded"
+        assert payment.status == PaymentStatus.SUCCEEDED
         subscription = await session.scalar(
             select(Subscription).where(Subscription.user_id == user_id)
         )
@@ -210,7 +208,7 @@ async def test_fsm_transitions(client, session_factory, monkeypatch):
         expired_payment = await session.scalar(
             select(Payment).where(Payment.idempotency_key == "idem-exp")
         )
-        assert expired_payment.status == "expired"
+        assert expired_payment.status == PaymentStatus.EXPIRED
 
 
 @pytest.mark.asyncio
@@ -222,15 +220,14 @@ async def test_order_tolerance(client, session_factory, monkeypatch):
         user = await _create_user(session)
         payment = Payment(
             user_id=user.id,
-            provider="yoomoney",
-            external_id="pay-order",
-            plan="WEEKLY",
-            amount=69000,
+            provider=Provider.YOOMONEY,
+            provider_payment_id="pay-order",
+            plan_code="WEEKLY",
+            amount_minor=69000,
             currency="RUB",
-            status="pending",
-            payload_json={},
+            status=PaymentStatus.PENDING,
+            raw={"confirmation_url": "https://pay/order"},
             idempotency_key="idem-order",
-            confirmation_url="https://pay/order",
         )
         session.add(payment)
         await session.commit()
@@ -268,7 +265,7 @@ async def test_order_tolerance(client, session_factory, monkeypatch):
 
     async with session_factory() as session:
         payment = await session.get(Payment, payment_id)
-        assert payment.status == "succeeded"
+        assert payment.status == PaymentStatus.SUCCEEDED
 
 
 @pytest.mark.asyncio
@@ -289,11 +286,11 @@ async def test_timeouts_and_failures_do_not_duplicate_payments(
         payments = await session.execute(select(Payment))
         rows = payments.scalars().all()
         assert len(rows) == 1
-        assert rows[0].status == "failed"
+        assert rows[0].status == PaymentStatus.FAILED
         attempts = await session.execute(
             select(PaymentAttempt).where(PaymentAttempt.payment_id == rows[0].id)
         )
-        assert attempts.scalar_one().phase == "init"
+        assert attempts.scalar_one().phase == PaymentAttemptPhase.INIT
 
 
 @pytest.mark.asyncio

@@ -18,7 +18,14 @@ from backend.app.models import Base
 
 @pytest_asyncio.fixture
 async def session_factory():
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    from sqlalchemy.pool import StaticPool
+
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        future=True,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with engine.begin() as conn:

@@ -182,10 +182,9 @@ async def test_apply_with_active_subscription_no_quota(client, session_factory):
         await seed_plans(session)
         user = await create_user(session, "paid-user")
         subscription = Subscription(
-            id=uuid.uuid4(),
             user_id=user["id"],
             plan_code="WEEKLY",
-            status=SubscriptionStatus.ACTIVE.value,
+            status=SubscriptionStatus.ACTIVE,
             current_period_start=datetime.now(timezone.utc) - timedelta(hours=1),
             current_period_end=datetime.now(timezone.utc) + timedelta(days=7),
             next_charge_at=None,

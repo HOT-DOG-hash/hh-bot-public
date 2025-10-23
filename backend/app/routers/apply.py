@@ -81,29 +81,17 @@ async def _enforce_rate_limits(request: Request, user_id: int) -> None:
 
 
 async def _create_trial_quota(session: AsyncSession, user_id: int) -> ApplicationQuota:
-    stmt = (
-        insert(ApplicationQuota)
-        .values(
-            user_id=user_id,
-            plan_code="FREE_TRIAL",
-            granted=10,
-            consumed=0,
-            non_renewable=True,
-            activated_at=func.now(),
-        )
-        .returning(ApplicationQuota.id)
+    quota = ApplicationQuota(
+        user_id=user_id,
+        plan_code="FREE_TRIAL",
+        granted=10,
+        consumed=0,
+        non_renewable=True,
+        activated_at=datetime.now(timezone.utc),
     )
-    await session.execute(stmt)
-    fetch_stmt = (
-        select(ApplicationQuota)
-        .where(
-            ApplicationQuota.user_id == user_id,
-            ApplicationQuota.plan_code == "FREE_TRIAL",
-        )
-        .limit(1)
-    )
-    result = await session.execute(fetch_stmt)
-    return result.scalar_one()
+    session.add(quota)
+    await session.flush()
+    return quota
 
 
 async def _record_application(session: AsyncSession, user_id: int, vacancy_id: str) -> None:
@@ -177,11 +165,10 @@ async def activate_trial(
     session: AsyncSession = Depends(get_db),
     user_token: str = Header(..., alias="X-User-Id"),
 ) -> dict[str, Any]:
-    user = await _resolve_user(session, user_token)
-    await _enforce_rate_limits(request, user.id)
-
     try:
         async with session.begin():
+            user = await _resolve_user(session, user_token)
+            await _enforce_rate_limits(request, user.id)
             quota = await _create_trial_quota(session, user.id)
     except IntegrityError:
         track_event("trial_already_used", {"user_id": user.id})
@@ -241,23 +228,22 @@ async def apply_to_vacancy(
     session: AsyncSession = Depends(get_db),
     user_token: str = Header(..., alias="X-User-Id"),
 ) -> dict[str, Any]:
-    user = await _resolve_user(session, user_token)
-    await _enforce_rate_limits(request, user.id)
-
-    vacancy_id = payload.vacancy_id.strip()
-    if not vacancy_id:
-        raise _http_error(
-            status.HTTP_400_BAD_REQUEST,
-            "INVALID_VACANCY_ID",
-            "vacancy_id обязателен.",
-        )
-
-    track_event("apply_click", {"user_id": user.id, "vacancy_id": vacancy_id})
-
-    eligibility = await billing_guard.evaluate_access(session, user.id)
-
     try:
         async with session.begin():
+            user = await _resolve_user(session, user_token)
+            await _enforce_rate_limits(request, user.id)
+
+            vacancy_id = payload.vacancy_id.strip()
+            if not vacancy_id:
+                raise _http_error(
+                    status.HTTP_400_BAD_REQUEST,
+                    "INVALID_VACANCY_ID",
+                    "vacancy_id обязателен.",
+                )
+
+            track_event("apply_click", {"user_id": user.id, "vacancy_id": vacancy_id})
+
+            eligibility = await billing_guard.evaluate_access(session, user.id)
             await _record_application(session, user.id, vacancy_id)
 
             if eligibility.mode == "paid":

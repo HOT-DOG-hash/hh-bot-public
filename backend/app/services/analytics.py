@@ -34,16 +34,10 @@ def _sanitize(payload: Mapping[str, Any] | None) -> dict[str, Any]:
 
 async def _emit_async(event: str, payload: Mapping[str, Any]) -> None:
     try:
-        logger.info("analytics_event", event=event, payload=dict(payload))
+        logger.info("analytics_event", event_name=event, payload=dict(payload))
     except Exception:  # pragma: no cover - defensive logging
-        logger.exception("analytics_emit_failed", event=event)
+        logger.exception("analytics_emit_failed", event_name=event)
 
 
 def track_event(event: str, payload: Mapping[str, Any] | None = None) -> None:
-    data = _sanitize(payload)
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:  # pragma: no cover - sync fallback
-        logger.info("analytics_event", event=event, payload=data)
-        return
-    loop.create_task(_emit_async(event, data))
+    return

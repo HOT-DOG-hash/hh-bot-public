@@ -1,0 +1,17 @@
+- [ ] Экспортировать observability-контракт в код: включить метрики/алерты (`p1.rules.example.yaml`) в prod конфигурацию
+- [ ] Подготовить rollout план ML-ranking: включение `ENABLE_ML_RANKING`, мониторинг Accept Rate/CTR, финальные guard rails
+- [ ] Синхронизировать Grafana панели с прод-данными (UID, переменные, Prometheus DS)
+- [ ] Внедрить спецификацию авто-кампаний в код (валидация, примеры, тесты) на основе docs/openapi/auto_campaigns.yaml
+- [ ] Реализовать idempotency + dedup logic для партнёрских интеграций (ингест, Redis/DB лог)
+- [ ] Подключить моки (`integration/mocks/*.json`) к пайплайну и автоматизировать smoke-тесты
+- [ ] Сверить prod-хранилище секретов (Vault) с env.example и обновить значения
+- [ ] Собрать данные для финального отчёта (офлайн + онлайн метрики)
+  - [ ] Подготовить baseline и candidate выгрузки (exp-YYYYMMDD-*)
+  - [ ] Сформировать `metrics_summary.csv` и визуализации
+  - [ ] Заполнить `ml_ranking_report_TEMPLATE.md` и согласовать выводы
+- [ ] Подключить источники событий/логирования для онлайн-метрик (CTR/Accept Rate)
+  - [ ] Настроить выгрузку событий в ClickHouse / Prometheus
+  - [ ] Привязать фичефлаг ENABLE_ML_RANKING к мониторингу (variant labels)
+  - [ ] Проверить guard rails и алерты в реальном окружении
+- [ ] Реализовать генерацию метрик `partner_*` и мониторинг из `integration/MONITORING.md`
+- [ ] Выполнить smoke-тесты интеграций с моками и задокументировать результаты

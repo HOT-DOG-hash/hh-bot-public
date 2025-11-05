@@ -1,0 +1,17 @@
+campaign_created_total{mode="strict"} 1
+campaign_state_transitions_total{from_state="draft",to_state="active"} 2
+campaign_idempotency_conflicts_total{endpoint="/api/v1/auto/campaigns"} 1
+campaign_auto_pauses_total{reason="error_streak"} 1
+campaign_delivery_logs_total{result="skipped"} 4
+delivery_attempt_errors_total{type="http_timeout"} 2
+campaign_scheduler_lag_seconds{partition="default"} 12.5
+campaign_active_total{mode="strict"} 3
+campaign_operation_latency_seconds_bucket{operation="start",le="0.1"} 6
+applications_sent_total{plan_code="WEEKLY"} 15
+daily_quota_remaining{plan_code="WEEKLY"} 8
+payments_initiated_total{plan_code="WEEKLY"} 10
+payments_succeeded_total{plan_code="WEEKLY"} 9
+payments_failed_total{plan_code="WEEKLY",reason="failed"} 1
+payments_revenue_minor_total{plan_code="WEEKLY"} 135000
+payments_refunds_minor_total{plan_code="WEEKLY"} 0
+webhook_lag_seconds_bucket{le="1"} 24

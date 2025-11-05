@@ -1,0 +1,119 @@
+version: 1
+updated_at: 2025-11-04T15:05:00Z
+streams:
+  P0:
+    blocks:
+      - id: P0.1
+        title: Dev checks & smoke
+        status: done
+        evidence:
+          - scripts/dev_check.sh
+          - reports/release_preflight.md
+          - reports/artifacts/README.md
+      - id: P0.2
+        title: Secrets & config
+        status: done
+        evidence:
+          - env.example
+          - docs/ops/secrets_checklist.md
+      - id: P0.3
+        title: Containers readiness
+        status: done
+        evidence:
+          - Dockerfile
+          - docker-compose.yml
+          - docs/ops/container_readiness.md
+  P1.1:
+    blocks:
+      - id: P1.1.3
+        title: API контракты
+        status: done
+        evidence:
+          - docs/openapi/auto_campaigns.yaml
+          - .spectral.yaml
+          - docs/openapi/CHANGELOG.md
+  P1.2:
+    blocks:
+      - id: P1.2
+        title: Observability & alerts
+        status: done
+        evidence:
+          - docs/ops/observability_spec.md
+          - ops/alerts/p1.rules.example.yaml
+          - checklist-progress/artifacts/P1.2/metrics_examples.txt
+  P1.3:
+    blocks:
+      - id: P1.3
+        title: Dashboards & acceptance
+        status: done
+        evidence:
+          - docs/dashboards/REPORTING_SYNC.md
+          - docs/dashboards/ACCEPTANCE.md
+          - docs/dashboards/ACCESS_MODEL.md
+  P1.4:
+    blocks:
+      - id: P1.4
+        title: Ranking decision docs
+        status: done
+        evidence:
+          - research/datasets/README.md
+          - research/P2.1_RANKING_SPIKE.md
+          - research/ml_ranking_report_TEMPLATE.md
+  P2.1:
+    blocks:
+      - id: P2.1.1
+        title: Датасеты
+        status: done
+        evidence:
+          - research/P2.1_RANKING_SPIKE.md#2-datasets-raw--cleaned--features
+          - research/P2.1_RANKING_SPIKE.md#5-privacy--legal
+          - research/datasets/README.md
+          - research/datasets/SAMPLE_SCHEMA.md
+      - id: P2.1.2
+        title: Offline-метрики и протокол
+        status: done
+        evidence:
+          - research/P2.1_RANKING_SPIKE.md#6-offline-metrics
+          - research/P2.1_RANKING_SPIKE.md#7-protocol
+          - research/offline_eval/README.md
+      - id: P2.1.3
+        title: Онлайн-метрика/A-B каркас
+        status: done
+        evidence:
+          - research/P2.1_RANKING_SPIKE.md#9-online-metrics--experimentation
+          - backend/app/feature_flags.py
+          - ops/experiments/AB_TEST_PLAN.md
+      - id: P2.1.4
+        title: Decision framework
+        status: done
+        evidence:
+          - research/P2.1_RANKING_SPIKE.md#10-decision-framework
+          - research/ml_ranking_report_TEMPLATE.md
+  P2.2:
+    blocks:
+      - id: P2.2.1
+        title: Партнёрские контракты
+        status: done
+        evidence:
+          - integration/P2.2_CONTRACTS.md
+          - integration/ERRORS_STATUS_MATRIX.md
+      - id: P2.2.2
+        title: Пайплайн и схемы
+        status: done
+        evidence:
+          - integration/PIPELINE.md
+          - integration/SCHEMAS.md
+      - id: P2.2.3
+        title: Моки и smoke-сценарии
+        status: done
+        evidence:
+          - integration/mocks/README.md
+          - integration/mocks/hh_vacancies_page.json
+          - checklist-progress/artifacts/P2.2/smoke_scenarios.md
+      - id: P2.2.4
+        title: Monitoring & acceptance
+        status: done
+        evidence:
+          - integration/MONITORING.md
+          - checklist-progress/artifacts/P2.2/metrics_examples.txt
+          - docs/dashboards/ACCEPTANCE.md

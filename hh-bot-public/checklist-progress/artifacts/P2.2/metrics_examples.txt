@@ -1,0 +1,20 @@
+# HELP partner_ingest_total Total partner requests
+# TYPE partner_ingest_total counter
+partner_ingest_total{partner="hh",endpoint="/vacancies"} 345
+
+# HELP partner_ingest_errors_total Total partner errors by code
+# TYPE partner_ingest_errors_total counter
+partner_ingest_errors_total{partner="hh",endpoint="/vacancies",code="429"} 4
+partner_ingest_errors_total{partner="habr",endpoint="/jobs",code="500"} 2
+
+# HELP partner_latency_seconds Partner API latency
+# TYPE partner_latency_seconds histogram
+partner_latency_seconds_bucket{partner="hh",endpoint="/vacancies",le="0.5"} 80
+partner_latency_seconds_bucket{partner="hh",endpoint="/vacancies",le="1"} 120
+partner_latency_seconds_bucket{partner="hh",endpoint="/vacancies",le="2"} 150
+partner_latency_seconds_sum{partner="hh",endpoint="/vacancies"} 220.0
+partner_latency_seconds_count{partner="hh",endpoint="/vacancies"} 150
+
+# HELP partner_dedup_total Duplicates removed per partner
+# TYPE partner_dedup_total counter
+partner_dedup_total{partner="habr",reason="external_id"} 5

@@ -1,0 +1,19 @@
+{
+  "id": "hh-12345",
+  "name": "Python Developer",
+  "description": "Вакансия python developer...",
+  "salary": {
+    "from": 150000,
+    "to": 220000,
+    "currency": "RUR"
+  },
+  "area": {
+    "name": "Москва",
+    "url": "https://api.hh.ru/areas/1"
+  },
+  "employer": {
+    "id": "comp-100",
+    "name": "Tech Corp"
+  },
+  "published_at": "2025-10-01T09:00:00+0300"
+}

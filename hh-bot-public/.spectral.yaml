@@ -1,0 +1,18 @@
+extends: spectral:oas
+rules:
+  info-description:
+    description: Ensure API description is present.
+    given:
+      - $.info
+    then:
+      field: description
+      function: truthy
+  info-title:
+    description: Ensure API title is present.
+    given:
+      - $.info
+    then:
+      field: title
+      function: truthy
+  operation-description: always
+  operation-id: always

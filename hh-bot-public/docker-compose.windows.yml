@@ -1,0 +1,89 @@
+services:
+  db:
+    image: postgres:16         # важно: не alpine
+    user: "0:0"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hh}
+      POSTGRES_USER: ${POSTGRES_USER:-hh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hh}
+      PGDATA: /var/lib/postgresql/data
+    # никаких volumes — только tmpfs → не будет ошибок chown/chmod на Windows
+    volumes: []
+    tmpfs:
+      - /var/lib/postgresql/data:size=512m,uid=0,gid=0,mode=0700
+      - /var/run/postgresql:size=16m,uid=0,gid=0,mode=0755
+    read_only: false
+    security_opt: []
+    cap_drop: []
+
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server","--save","60","1","--loglevel","warning"]
+    # redis в tmpfs не нужен, но и volume не обязателен для P0
+    read_only: false
+    security_opt: []
+    cap_drop: []
+
+  web:
+    # web/bot будем строить локально (из твоего Dockerfile) — без GHCR
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    env_file: [ ./.env ]
+    environment:
+      PYTHONPATH: "/app:/app/HH бот"
+      APP_ENV: ${APP_ENV:-prod}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      WEB_PORT: ${WEB_PORT:-8000}
+      APP_MODULE: ${APP_MODULE:-backend.app.main:app}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-hh}:${POSTGRES_PASSWORD:-hh}@db:5432/${POSTGRES_DB:-hh}}
+      REDIS_URL: ${REDIS_URL:-redis://cache:6379/0}
+    depends_on:
+      db: { condition: service_started }   # на tmpfs health не нужен
+      cache: { condition: service_started }
+    read_only: false
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: bot
+    env_file: [ ./.env ]
+    environment:
+      PYTHONPATH: "/app:/app/HH бот"
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-hh}:${POSTGRES_PASSWORD:-hh}@db:5432/${POSTGRES_DB:-hh}}
+      REDIS_URL: ${REDIS_URL:-redis://cache:6379/0}
+    depends_on:
+      db: { condition: service_started }
+      cache: { condition: service_started }
+    read_only: false
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      web: { condition: service_started }
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    command: >
+      sh -lc 'set -eu;
+              for d in client_temp proxy_temp fastcgi_temp uwsgi_temp scgi_temp; do
+                mkdir -p "/var/cache/nginx/$$d";
+                chmod 0777 "/var/cache/nginx/$$d";
+              done;
+              exec nginx -g "daemon off;"'
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: ["tunnel","--no-autoupdate","run","--token","${CF_TUNNEL_TOKEN}"]
+    depends_on:
+      nginx: { condition: service_started }
+    network_mode: "service:nginx"

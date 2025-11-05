@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+respect-gitignore = true
+target-version = "py312"
+src = ["backend", "front_bot"]
+exclude = [
+  "**/node_modules",
+  "**/.venv",
+  "legacy_hh_bot",
+]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+strict_optional = true
+no_implicit_optional = true
+namespace_packages = true
+explicit_package_bases = true
+show_error_codes = true
+packages = ["backend", "front_bot"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra"
+markers = [
+  "pg: integration tests that require a Postgres database",
+]

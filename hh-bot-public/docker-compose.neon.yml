@@ -1,0 +1,26 @@
+services:
+  # web должен зависеть только от redis и НЕ требовать локальную db
+  web:
+    depends_on:
+      db: null                          # ← ЯВНО убираем зависимость от db
+      cache:
+        condition: service_healthy
+    environment:
+      # web возьмёт подключение к Neon из этой переменной
+      DATABASE_URL: ${NEON_DATABASE_URL}
+      # На P0 телеграм-бот не нужен
+      ENABLE_TELEGRAM_BOT: "0"
+
+  # бот выключаем из P0, чтобы не мешал релизу
+  bot:
+    profiles: ["later"]
+    depends_on:
+      db: null
+      cache:
+        condition: service_healthy
+
+  # nginx можно стартовать когда web просто запущен
+  nginx:
+    depends_on:
+      web:
+        condition: service_started

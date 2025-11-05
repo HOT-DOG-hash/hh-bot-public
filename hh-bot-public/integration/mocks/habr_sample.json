@@ -1,0 +1,14 @@
+{
+  "id": "habr-9876",
+  "title": "Go Backend Engineer",
+  "description": "Backend developer with Go experience",
+  "salary_from": 200000,
+  "salary_to": 260000,
+  "currency": "RUB",
+  "location": "Санкт-Петербург",
+  "company": {
+    "id": "habr-comp-42",
+    "name": "Dev Solutions"
+  },
+  "created_at": "2025-10-02T10:30:00Z"
+}

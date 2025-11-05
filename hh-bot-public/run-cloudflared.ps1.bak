@@ -1,0 +1,119 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+function Invoke-DockerCompose {
+    param([string[]]$Arguments)
+    $cmd = @('compose','-f','docker-compose.prod.yml') + $Arguments
+    & docker @cmd
+    if ($LASTEXITCODE -ne 0) {
+        throw "Команда docker compose завершилась с кодом $LASTEXITCODE."
+    }
+}
+
+$tokenInjected = $false
+$secureToken = $null
+
+try {
+    if ([string]::IsNullOrWhiteSpace($env:CF_TUNNEL_TOKEN)) {
+        $secureToken = Read-Host -Prompt 'Введите CF_TUNNEL_TOKEN' -AsSecureString
+        if ($secureToken.Length -le 0) {
+            throw 'CF_TUNNEL_TOKEN не задан.'
+        }
+
+        $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+        try {
+            $plainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+        } finally {
+            [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+        }
+
+        if ([string]::IsNullOrWhiteSpace($plainToken)) {
+            throw 'Ошибка преобразования CF_TUNNEL_TOKEN.'
+        }
+
+        [Environment]::SetEnvironmentVariable('CF_TUNNEL_TOKEN', $plainToken, 'Process')
+        $plainToken = $null
+        $tokenInjected = $true
+    }
+
+    Write-Host 'Проверяю конфигурацию docker compose...'
+    Invoke-DockerCompose @('config') | Out-Null
+
+    Write-Host 'Перезапускаю cloudflared...'
+    Invoke-DockerCompose @('up','-d','--force-recreate','cloudflared')
+
+    Write-Host 'Ожидаю регистрацию туннеля (Registered tunnel connection)...'
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = 'docker'
+    $psi.ArgumentList.Add('compose')
+    $psi.ArgumentList.Add('-f')
+    $psi.ArgumentList.Add('docker-compose.prod.yml')
+    $psi.ArgumentList.Add('logs')
+    $psi.ArgumentList.Add('--follow')
+    $psi.ArgumentList.Add('--tail')
+    $psi.ArgumentList.Add('120')
+    $psi.ArgumentList.Add('--no-log-prefix')
+    $psi.ArgumentList.Add('cloudflared')
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $proc = [System.Diagnostics.Process]::new()
+    $proc.StartInfo = $psi
+    if (-not $proc.Start()) {
+        throw 'Не удалось запустить просмотр логов cloudflared.'
+    }
+
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $timeout = [TimeSpan]::FromSeconds(120)
+    $registered = $false
+
+    while ($stopwatch.Elapsed -lt $timeout) {
+        while (-not $proc.StandardOutput.EndOfStream) {
+            $line = $proc.StandardOutput.ReadLine()
+            Write-Host $line
+            if ($line -match 'Registered tunnel connection') {
+                $registered = $true
+                break
+            }
+        }
+
+        if ($registered) { break }
+
+        while (-not $proc.StandardError.EndOfStream) {
+            $errLine = $proc.StandardError.ReadLine()
+            Write-Host $errLine
+        }
+
+        if ($proc.HasExited) { break }
+        Start-Sleep -Milliseconds 100
+    }
+
+    if (-not $registered) {
+        if (-not $proc.HasExited) {
+            try { $proc.Kill() } catch { }
+        }
+        throw 'Не удалось установить HTTP/2 соединение с Cloudflare edge. Возможна TLS-инспекция или VPN.'
+    }
+
+    if (-not $proc.HasExited) {
+        try { $proc.Kill() } catch { }
+    }
+
+    Write-Host 'Готово: tunnel registered (HTTP/2).'
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
+}
+finally {
+    if ($secureToken) {
+        $secureToken.Dispose()
+    }
+    if ($tokenInjected) {
+        Remove-Item Env:CF_TUNNEL_TOKEN -ErrorAction SilentlyContinue
+    }
+}
+
+exit 0

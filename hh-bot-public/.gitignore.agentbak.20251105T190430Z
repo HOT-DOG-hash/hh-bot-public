@@ -1,0 +1,102 @@
+# --- Python venv / cache / builds
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# --- IDE / OS junk
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+._*
+*.log
+desktop.ini
+*.swp
+*.swo
+
+# --- Node / PHP
+node_modules/
+front_bot_php/vendor/
+*.phar            # composer.phar и др. бинарники PHP
+
+# --- Databases
+*.sqlite
+*.db
+
+# --- ENV (keep example!)
+.env
+.env.*
+!.env.example
+# частные для проекта
+HH бот/.env.dev
+
+# --- Alembic локальные
+HH бот/backend/alembic.ini.local
+
+# --- PHP vendor уже есть; composer.lock лучше хранить в репозитории (для app)
+# front_bot_php/vendor/ (оставляем)
+# НЕ игнорируем composer.lock
+
+
+# --- TLS/SSH keys & certs (глобально, в любых папках)
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.crt
+**/*.cer
+**/*.cert
+**/id_rsa
+**/id_dsa
+**/known_hosts
+
+# --- Local configs that must not be committed
+config.local.*.json
+secrets*.json
+secrets*.yml
+front_bot/.env
+front_bot/config_secrets.py
+
+# Если это реальный код — лучше его не игнорировать,
+# а вынести секреты в ENV. Пока оставляем:
+backend/app/core/local_settings.py
+backend/app/core/config_prod.py
+
+# --- Test/Lint/Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# --- Secret scanners & mirrors (артефакты)
+tools/reports/
+.mirror.git/
+.remote-mirror.git/
+gitleaks-history.json
+trufflehog-*.json
+trufflehog-files.json
+secrets-findings.json
+secrets-findings.*.json
+
+# --- Project-specific runtime/logs & diagnostics
+logs/
+.diagnostics/
+diag_bundle/
+
+# --- Nginx local-only bits
+nginx/.htpasswd
+nginx/nginx.conf.safe
+# (nginx/html/ и конфиги nginx НЕ игнорируем, если они часть репо)
+
+# --- Docker local overrides
+docker-compose.override.yml
+docker-compose.local.yml

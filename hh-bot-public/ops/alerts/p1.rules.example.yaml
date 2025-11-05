@@ -1,0 +1,61 @@
+# Prometheus alerting skeleton for hh-bot P1
+# Aligns with docs/ops/observability_spec.md (SLO section)
+
+groups:
+  - name: auto-campaigns
+    rules:
+      - alert: AutoCampaignErrorBurst
+        expr: increase(delivery_attempt_errors_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "Бурст ошибок доставки >5 за 5м"
+          runbook: ops/runbooks/autocampaigns/error_burst.md
+
+      - alert: BackoffStuck
+        expr: avg_over_time(campaign_scheduler_lag_seconds[5m]) > 120
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Лаг шедулера превышает 120с"
+          runbook: ops/runbooks/autocampaigns/scheduler_lag.md
+
+      - alert: AutoCampaignReadyFailure
+        expr: avg_over_time(probe_success{job="hh-bot-readyz"}[5m]) < 1
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "readiness-проба /readyz возвращает ошибки"
+          runbook: ops/runbooks/autocampaigns/ready_failure.md
+
+      - alert: NotificationLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(webhook_lag_seconds_bucket[15m]))) > 60
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "p95 латентности вебхуков > 60с"
+          runbook: ops/runbooks/autocampaigns/notification_latency.md
+
+      - alert: OptOutSpike
+        expr: (increase(campaign_delivery_logs_total{result="skipped"}[10m]) / clamp_min(increase(campaign_delivery_logs_total{result="sent"}[10m]), 1)) > 1.5
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Доля пропущенных отправок > 150% от отправленных за 10 минут"
+          runbook: ops/runbooks/autocampaigns/optout_spike.md
+
+  - name: payments
+    rules:
+      - alert: PaymentsFailureRateHigh
+        expr: (increase(payments_failed_total[10m]) / clamp_min(increase(payments_initiated_total[10m]), 1)) > 0.08
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Доля неуспешных платежей превысила 8% за 10 минут"
+          runbook: ops/runbooks/billing/payments_failure.md

@@ -1,0 +1,1217 @@
+openapi: 3.1.0
+info:
+  title: Auto Campaigns API
+  version: 1.0.0
+  description: >
+    HTTP API for managing automated outreach campaigns, delivery windows, and related operational
+    resources. The contract reflects the current FastAPI implementation in `backend/app/routers/`
+    and Pydantic schemas in `backend/app/schemas/auto_campaigns.py`.
+servers:
+  - url: https://api.hh-bot.example.com
+    description: Production
+  - url: http://localhost:8000
+    description: Local development
+tags:
+  - name: auto-campaigns
+    description: CRUD and operational actions for automated campaigns
+  - name: support
+    description: Health, readiness, and observability endpoints
+security:
+  - BearerAuth: []
+paths:
+  /api/v1/auto/campaigns:
+    post:
+      tags: [auto-campaigns]
+      summary: Create an auto campaign
+      operationId: createAutoCampaign
+      description: >
+        Creates a new auto campaign for the specified owner. The request must include a unique
+        `Idempotency-Key` header to guarantee safe retries.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CampaignCreateRequest'
+            examples:
+              basic:
+                summary: Campaign with one window and step
+                value:
+                  owner_id: 314
+                  mode: strict
+                  daily_quota_target: 25
+                  default_window_id: dawn-slot
+                  windows:
+                    - client_token: dawn-slot
+                      start_utc: '05:00:00'
+                      end_utc: '18:00:00'
+                      days_mask: '1111100'
+                      is_default: true
+                    - client_token: evening-slot
+                      start_utc: '15:00:00'
+                      end_utc: '20:30:00'
+                      days_mask: '1111110'
+                      is_default: false
+                  steps:
+                    - client_token: step-1
+                      step_order: 1
+                      vacancy_filter:
+                        location: moscow
+                        experience: mid
+                      delivery_window_id: dawn-slot
+                      message_template_id: 501
+                      skip_policy: manual
+                  frequency_caps:
+                    per_day: 10
+                    per_week: 50
+                    per_company: 2
+                  cooldown_policy:
+                    base_delay_ms: 60000
+                    max_delay_ms: 180000
+                    strategy: exp
+                    error_streak_limit: 5
+      responses:
+        '201':
+          description: Campaign created
+          headers:
+            Location:
+              description: Absolute URL of the new campaign
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignCreatedResponse'
+              examples:
+                created:
+                  value:
+                    id: 982
+                    status: draft
+                    revision: 1
+                    default_window_id: 441
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v1/auto/campaigns/{campaign_id}:
+    get:
+      tags: [auto-campaigns]
+      summary: Get campaign with related resources
+      operationId: getAutoCampaign
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+      responses:
+        '200':
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignFullResponse'
+              examples:
+                full:
+                  $ref: '#/components/examples/CampaignFullExample'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/auto/campaigns/{campaign_id}/start:
+    post:
+      tags: [auto-campaigns]
+      summary: Start (or force start) a campaign
+      operationId: startAutoCampaign
+      description: >
+        Enqueues campaign execution. When the campaign is already running, the request is treated
+        idempotently and returns the existing run metadata. Providing `force=true` bypasses quiet
+        hours and active auto-pauses.
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CampaignStartRequest'
+            examples:
+              force:
+                value:
+                  force: true
+      responses:
+        '202':
+          description: Start accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignStartResponse'
+              examples:
+                accepted:
+                  value:
+                    campaign_id: 982
+                    scheduled_at: '2025-11-04T12:00:00Z'
+                    delay_ms: 60000
+                    status_after: active
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '423':
+          $ref: '#/components/responses/Locked'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v1/auto/campaigns/{campaign_id}/pause:
+    post:
+      tags: [auto-campaigns]
+      summary: Pause a campaign with audit context
+      operationId: pauseAutoCampaign
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PauseRequest'
+            examples:
+              manual:
+                value:
+                  reason: quota_exhausted
+                  until: '2025-11-05T08:00:00Z'
+      responses:
+        '200':
+          description: Campaign paused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignStatusResponse'
+              examples:
+                paused:
+                  value:
+                    campaign_id: 982
+                    status: paused
+                    updated_at: '2025-11-04T12:05:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v1/auto/campaigns/{campaign_id}/stop:
+    post:
+      tags: [auto-campaigns]
+      summary: Stop a campaign
+      operationId: stopAutoCampaign
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Campaign stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignStatusResponse'
+              examples:
+                stopped:
+                  value:
+                    campaign_id: 982
+                    status: archived
+                    updated_at: '2025-11-04T12:10:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v1/auto/campaigns/{campaign_id}/skip:
+    post:
+      tags: [auto-campaigns]
+      summary: Skip a target delivery
+      operationId: skipAutoCampaignTarget
+      description: Marks a delivery log as skipped with audit information.
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkipRequest'
+            examples:
+              manual:
+                value:
+                  vacancy_id: VAC-2025-001
+                  step_id: 44
+                  reason: duplicate_contact
+                  note: Already contacted via manual outreach
+      responses:
+        '200':
+          description: Target skipped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkipResult'
+              examples:
+                skipped:
+                  value:
+                    delivery_log_id: 7321
+                    status: skipped
+                    attempted_at: '2025-11-04T12:20:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v1/auto/campaigns/{campaign_id}/blacklist:
+    get:
+      tags: [auto-campaigns]
+      summary: List company blacklist entries
+      operationId: listCampaignBlacklist
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+      responses:
+        '200':
+          description: Blacklist entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyBlacklistPage'
+              examples:
+                page:
+                  value:
+                    items:
+                      - id: 47
+                        owner_id: 314
+                        company_name: Contoso LLC
+                        company_id_external: HH-900
+                        reason: repeated opt-outs
+                        added_at: '2025-11-01T08:00:00Z'
+                        removed_at: null
+                    next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [auto-campaigns]
+      summary: Add company to blacklist
+      operationId: addCampaignBlacklist
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyBlacklistCreate'
+            examples:
+              add:
+                value:
+                  company_name: ACME Corp
+                  company_id_external: HC-333
+                  reason: legal hold
+      responses:
+        '201':
+          description: Blacklist entry stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyBlacklistItem'
+              examples:
+                stored:
+                  value:
+                    id: 48
+                    owner_id: 314
+                    company_name: ACME Corp
+                    company_id_external: HC-333
+                    reason: legal hold
+                    added_at: '2025-11-04T12:30:00Z'
+                    removed_at: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v1/auto/campaigns/{campaign_id}/blacklist/{blacklist_id}:
+    delete:
+      tags: [auto-campaigns]
+      summary: Remove company from blacklist
+      operationId: deleteCampaignBlacklist
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/BlacklistId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Blacklist entry removed (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyBlacklistItem'
+              examples:
+                removed:
+                  value:
+                    id: 48
+                    owner_id: 314
+                    company_name: ACME Corp
+                    company_id_external: HC-333
+                    reason: legal hold
+                    added_at: '2025-11-04T12:30:00Z'
+                    removed_at: '2025-11-05T09:00:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /health:
+    get:
+      tags: [support]
+      summary: Liveness probe
+      operationId: healthRoot
+      description: >
+        Lightweight health probe with optional strict mode. Returns HTTP 503 if any component check
+        fails and `strict=true`.
+      parameters:
+        - name: strict
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: When true, responds with HTTP 503 if any check is degraded.
+      responses:
+        '200':
+          description: Service healthy or degraded but tolerable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    checks:
+                      db: ok
+                      redis: skip
+                    version: 1.4.0
+        '503':
+          description: One or more components failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                degraded:
+                  value:
+                    status: degraded
+                    checks:
+                      db: db:OperationalError
+                      redis: skip
+                    version: 1.4.0
+  /readyz:
+    get:
+      tags: [support]
+      summary: Readiness probe
+      operationId: readiness
+      description: Detailed readiness check returning per-component status and build metadata.
+      responses:
+        '200':
+          description: Ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyzResponse'
+              examples:
+                ready:
+                  value:
+                    status: ready
+                    components:
+                      db: ready
+                      redis: ready
+                      version: 1d2f3a4
+                      build_time: '2025-11-04T12:00:00Z'
+        '503':
+          description: Degraded readiness
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyzResponse'
+              examples:
+                degraded:
+                  value:
+                    status: degraded
+                    components:
+                      db:
+                        status: error
+                        detail: connection refused
+                      redis: ready
+                      version: 1d2f3a4
+                      build_time: '2025-11-04T12:00:00Z'
+  /metrics:
+    get:
+      tags: [support]
+      summary: Prometheus metrics endpoint
+      operationId: metrics
+      responses:
+        '200':
+          description: Latest Prometheus metrics snapshot
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                sample:
+                  value: |
+                    # HELP http_request_duration_seconds Duration of HTTP requests.
+                    # TYPE http_request_duration_seconds histogram
+                    http_request_duration_seconds_bucket{le="0.1"} 42
+                    http_request_duration_seconds_sum 12.3
+                    http_request_duration_seconds_count 55
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    CampaignId:
+      in: path
+      name: campaign_id
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Numeric identifier of the campaign.
+    BlacklistId:
+      in: path
+      name: blacklist_id
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Identifier of a blacklist entry.
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      description: >
+        Case-sensitive key that guarantees idempotent processing of write operations. Reuse the same
+        value to safely retry requests.
+      schema:
+        type: string
+        minLength: 8
+  responses:
+    BadRequest:
+      description: Invalid input payload or missing idempotency key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalid_window:
+              value:
+                detail: windows must be within 03:00–21:00 UTC
+    Unauthorized:
+      description: Authentication required.
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+          description: Bearer realm details.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing_token:
+              value:
+                detail: bearer token missing
+    Forbidden:
+      description: Caller authenticated but lacks permission.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            no_access:
+              value:
+                detail: auto campaigns feature is disabled for tenant
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unknown_campaign:
+              value:
+                detail: campaign 982 not found
+    Conflict:
+      description: Business conflict such as an idempotency clash or invalid state transition.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            idempotent_replay:
+              value:
+                detail: idempotent replay detected for key abc123
+    TooManyRequests:
+      description: Throttling applied.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 0
+          description: Seconds until the client may retry.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            throttled:
+              value:
+                detail: auto campaigns rate limit exceeded
+    Locked:
+      description: The campaign is locked by another operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            locked:
+              value:
+                detail: campaign 982 is locked by another process
+  examples:
+    CampaignFullExample:
+      value:
+        campaign:
+          id: 982
+          owner_id: 314
+          status: active
+          mode: strict
+          daily_quota_target: 25
+          default_window_id: 441
+          cooldown_policy_id: 77
+          created_at: '2025-11-01T09:00:00Z'
+          updated_at: '2025-11-04T11:55:00Z'
+        windows:
+          - id: 441
+            campaign_id: 982
+            start_utc: '05:00:00'
+            end_utc: '18:00:00'
+            days_mask: '1111100'
+            is_default: true
+            created_at: '2025-11-01T09:00:00Z'
+            updated_at: '2025-11-01T09:00:00Z'
+        steps:
+          - id: 771
+            campaign_id: 982
+            step_order: 1
+            delivery_window_id: 441
+            message_template_id: 501
+            skip_policy: manual
+            vacancy_filter:
+              location: moscow
+              experience: mid
+            created_at: '2025-11-01T09:05:00Z'
+            updated_at: '2025-11-01T09:05:00Z'
+        frequency_caps:
+          per_day: 10
+          per_week: 50
+          per_company: 2
+        cooldown_policy:
+          base_delay_ms: 60000
+          max_delay_ms: 180000
+          strategy: exp
+          error_streak_limit: 5
+        runs:
+          - id: 1203
+            campaign_id: 982
+            run_started_at: '2025-11-03T07:00:00Z'
+            run_finished_at: '2025-11-03T07:15:00Z'
+            scheduled_by: scheduler
+            status: success
+            sent_count: 120
+            error_count: 4
+            skipped_count: 6
+            delay_applied_ms: 60000
+        blacklist_sample:
+          - id: 47
+            owner_id: 314
+            company_name: Contoso LLC
+            company_id_external: HH-900
+            reason: repeated opt-outs
+            added_at: '2025-11-01T08:00:00Z'
+            removed_at: null
+  schemas:
+    CampaignCreateRequest:
+      type: object
+      required:
+        - owner_id
+        - mode
+        - daily_quota_target
+        - windows
+        - steps
+      properties:
+        owner_id:
+          type: integer
+          minimum: 1
+          description: Numeric identifier of the campaign owner.
+        mode:
+          type: string
+          enum: [strict, wide]
+        daily_quota_target:
+          type: integer
+          minimum: 1
+          maximum: 100
+        default_window_id:
+          type: string
+          nullable: true
+          description: Client token of the window to treat as default.
+        windows:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DeliveryWindowInput'
+        steps:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CampaignStepInput'
+        frequency_caps:
+          $ref: '#/components/schemas/FrequencyCapsInput'
+        cooldown_policy:
+          $ref: '#/components/schemas/CooldownPolicyInput'
+    DeliveryWindowInput:
+      type: object
+      required:
+        - client_token
+        - start_utc
+        - end_utc
+        - days_mask
+      properties:
+        client_token:
+          type: string
+          description: Stable client-generated identifier for referencing the window.
+        start_utc:
+          type: string
+          format: time
+          description: >
+            Start time (UTC). Must fall inside the allowed window of 03:00–21:00 UTC as enforced by
+            the service.
+        end_utc:
+          type: string
+          format: time
+        days_mask:
+          type: string
+          pattern: '^[01]{7}$'
+          description: >
+            Seven-character mask from Monday to Sunday where `1` enables delivery on that day.
+        is_default:
+          type: boolean
+          default: false
+    CampaignStepInput:
+      type: object
+      required:
+        - step_order
+        - vacancy_filter
+        - delivery_window_id
+        - message_template_id
+      properties:
+        client_token:
+          type: string
+          nullable: true
+        step_order:
+          type: integer
+          minimum: 1
+          maximum: 999
+        vacancy_filter:
+          type: object
+          additionalProperties: true
+        delivery_window_id:
+          type: string
+          description: References `windows[].client_token`.
+        message_template_id:
+          type: integer
+          minimum: 1
+        skip_policy:
+          type: string
+          enum: [manual, auto]
+          default: manual
+    FrequencyCapsInput:
+      type: object
+      required:
+        - per_day
+        - per_week
+        - per_company
+      properties:
+        per_day:
+          type: integer
+          minimum: 0
+          maximum: 10
+        per_week:
+          type: integer
+          minimum: 0
+          maximum: 50
+        per_company:
+          type: integer
+          minimum: 0
+          maximum: 2
+    CooldownPolicyInput:
+      type: object
+      required:
+        - base_delay_ms
+        - max_delay_ms
+        - strategy
+        - error_streak_limit
+      properties:
+        base_delay_ms:
+          type: integer
+          minimum: 1
+          description: Initial delay before retrying failed deliveries in milliseconds.
+        max_delay_ms:
+          type: integer
+          minimum: 1
+        strategy:
+          type: string
+          enum: [exp, linear]
+        error_streak_limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+    CampaignCreatedResponse:
+      type: object
+      required:
+        - id
+        - status
+        - revision
+        - default_window_id
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [draft, active, paused, archived]
+        revision:
+          type: integer
+        default_window_id:
+          type: integer
+          nullable: true
+    CampaignFullResponse:
+      type: object
+      required:
+        - campaign
+        - windows
+        - steps
+        - runs
+        - blacklist_sample
+      properties:
+        campaign:
+          $ref: '#/components/schemas/CampaignResource'
+        windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryWindowResource'
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignStepResource'
+        frequency_caps:
+          $ref: '#/components/schemas/FrequencyCapsResource'
+        cooldown_policy:
+          $ref: '#/components/schemas/CooldownPolicyResource'
+        runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignRunResource'
+        blacklist_sample:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyBlacklistItem'
+    CampaignResource:
+      type: object
+      required:
+        - id
+        - owner_id
+        - status
+        - mode
+        - daily_quota_target
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        owner_id:
+          type: integer
+        status:
+          type: string
+          enum: [draft, active, paused, archived]
+        mode:
+          type: string
+          enum: [strict, wide]
+        daily_quota_target:
+          type: integer
+        default_window_id:
+          type: integer
+          nullable: true
+        cooldown_policy_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    DeliveryWindowResource:
+      type: object
+      required:
+        - id
+        - campaign_id
+        - start_utc
+        - end_utc
+        - days_mask
+        - is_default
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        campaign_id:
+          type: integer
+        start_utc:
+          type: string
+          format: time
+        end_utc:
+          type: string
+          format: time
+        days_mask:
+          type: string
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CampaignStepResource:
+      type: object
+      required:
+        - id
+        - campaign_id
+        - step_order
+        - delivery_window_id
+        - message_template_id
+        - skip_policy
+        - vacancy_filter
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        campaign_id:
+          type: integer
+        step_order:
+          type: integer
+        delivery_window_id:
+          type: integer
+        message_template_id:
+          type: integer
+        skip_policy:
+          type: string
+          enum: [manual, auto]
+        vacancy_filter:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    FrequencyCapsResource:
+      type: object
+      required:
+        - per_day
+        - per_week
+        - per_company
+      properties:
+        per_day:
+          type: integer
+        per_week:
+          type: integer
+        per_company:
+          type: integer
+    CooldownPolicyResource:
+      type: object
+      required:
+        - base_delay_ms
+        - max_delay_ms
+        - strategy
+        - error_streak_limit
+      properties:
+        base_delay_ms:
+          type: integer
+        max_delay_ms:
+          type: integer
+        strategy:
+          type: string
+          enum: [exp, linear]
+        error_streak_limit:
+          type: integer
+    CampaignRunResource:
+      type: object
+      required:
+        - id
+        - campaign_id
+        - run_started_at
+        - scheduled_by
+        - status
+        - sent_count
+        - error_count
+        - skipped_count
+      properties:
+        id:
+          type: integer
+        campaign_id:
+          type: integer
+        run_started_at:
+          type: string
+          format: date-time
+        run_finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        scheduled_by:
+          type: string
+        status:
+          type: string
+        sent_count:
+          type: integer
+        error_count:
+          type: integer
+        skipped_count:
+          type: integer
+        delay_applied_ms:
+          type: integer
+          nullable: true
+    CampaignStartRequest:
+      type: object
+      properties:
+        force:
+          type: boolean
+          default: false
+    CampaignStartResponse:
+      type: object
+      required:
+        - campaign_id
+        - scheduled_at
+        - status_after
+      properties:
+        campaign_id:
+          type: integer
+        scheduled_at:
+          type: string
+          format: date-time
+        delay_ms:
+          type: integer
+          nullable: true
+        status_after:
+          type: string
+          enum: [draft, active, paused, archived]
+    CampaignStatusResponse:
+      type: object
+      required:
+        - campaign_id
+        - status
+        - updated_at
+      properties:
+        campaign_id:
+          type: integer
+        status:
+          type: string
+          enum: [draft, active, paused, archived]
+        updated_at:
+          type: string
+          format: date-time
+    PauseRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          maxLength: 255
+        until:
+          type: string
+          format: date-time
+          nullable: true
+    SkipRequest:
+      type: object
+      required:
+        - vacancy_id
+        - reason
+      properties:
+        vacancy_id:
+          type: string
+        step_id:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+          maxLength: 255
+        note:
+          type: string
+          maxLength: 1024
+          nullable: true
+    SkipResult:
+      type: object
+      required:
+        - delivery_log_id
+        - status
+        - attempted_at
+      properties:
+        delivery_log_id:
+          type: integer
+        status:
+          type: string
+        attempted_at:
+          type: string
+          format: date-time
+    CompanyBlacklistCreate:
+      type: object
+      required:
+        - company_name
+      properties:
+        company_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        company_id_external:
+          type: string
+          maxLength: 255
+          nullable: true
+        reason:
+          type: string
+          maxLength: 255
+          nullable: true
+    CompanyBlacklistItem:
+      type: object
+      required:
+        - id
+        - owner_id
+        - company_name
+        - added_at
+      properties:
+        id:
+          type: integer
+        owner_id:
+          type: integer
+        company_name:
+          type: string
+        company_id_external:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        added_at:
+          type: string
+          format: date-time
+        removed_at:
+          type: string
+          format: date-time
+          nullable: true
+    CompanyBlacklistPage:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyBlacklistItem'
+        next_cursor:
+          type: string
+          nullable: true
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - checks
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+        version:
+          type: string
+          nullable: true
+    ReadyzResponse:
+      type: object
+      required:
+        - status
+        - components
+      properties:
+        status:
+          type: string
+        components:
+          type: object
+          additionalProperties: {}

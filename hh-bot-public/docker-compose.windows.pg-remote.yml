@@ -1,0 +1,14 @@
+services:
+  db:
+    # в P0-Remote локальный Postgres не запускаем вовсе
+    profiles: ["disabled"]
+
+  web:
+    environment:
+      # укажи внешний DSN, например:
+      # DATABASE_URL=postgresql+asyncpg://user:pass@<host>:5432/<db>
+      DATABASE_URL: ${DATABASE_URL}
+
+  bot:
+    environment:
+      DATABASE_URL: ${DATABASE_URL}

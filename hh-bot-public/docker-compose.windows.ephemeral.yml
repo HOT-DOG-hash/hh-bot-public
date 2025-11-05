@@ -1,0 +1,28 @@
+# ⚠️ ТОЛЬКО ДЛЯ ЛОКАЛЬНЫХ ТЕСТОВ под Windows. На P0 не подключай этот файл!
+# Он предназначен для временного запуска postgres/redis без конфликтов прав.
+
+services:
+  db:
+    # Эпемерный PostgreSQL (данные НЕ сохраняются).
+    user: "0:0"
+    security_opt: []
+    cap_drop: []
+    read_only: false
+    volumes: []   # никаких bind/named volumes — только tmpfs
+    tmpfs:
+      - /var/run/postgresql:size=16m,uid=0,gid=0,mode=0755
+      - /var/lib/postgresql/data:size=512m,uid=0,gid=0,mode=0700
+    environment:
+      PGDATA: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U ${POSTGRES_USER:-hh} -d ${POSTGRES_DB:-hh}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  cache:
+    # Избегаем "failed switching to redis": не используем no-new-privileges и cap_drop тут.
+    user: "redis"
+    security_opt: []
+    cap_drop: []
+    read_only: false

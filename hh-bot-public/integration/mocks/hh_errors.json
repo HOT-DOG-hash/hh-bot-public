@@ -1,0 +1,18 @@
+{
+  "429": {
+    "errors": [
+      {
+        "type": "rate_limit",
+        "value": "Requests too frequent"
+      }
+    ]
+  },
+  "500": {
+    "errors": [
+      {
+        "type": "server_error",
+        "value": "Internal error"
+      }
+    ]
+  }
+}

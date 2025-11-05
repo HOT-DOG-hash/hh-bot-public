@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Dev-only helpers
+pytest-cov==5.0.0
